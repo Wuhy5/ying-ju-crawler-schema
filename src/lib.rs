@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -125,6 +127,7 @@ pub enum ScriptEngine {
     #[serde(rename = "javascript")]
     JavaScript,
     Python,
+    Lua,
 }
 
 /// WebView action type
@@ -395,15 +398,32 @@ pub struct Interceptor {
     pub after_response: Option<String>,
 }
 
+/// Script module configuration
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ScriptModule {
+    /// Script engine (overrides global engine if specified)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub engine: Option<ScriptEngine>,
+    /// Inline script code
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
+    /// Remote script URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    /// Cache TTL for remote scripts (seconds)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cache_ttl: Option<u32>,
+}
+
 /// Scripting configuration
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ScriptingConfig {
+    /// Default script engine for all modules
     #[serde(skip_serializing_if = "Option::is_none")]
     pub engine: Option<ScriptEngine>,
+    /// Script modules
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub source_dir: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub files: Option<serde_json::Map<String, serde_json::Value>>,
+    pub modules: Option<HashMap<String, ScriptModule>>,
 }
 
 /// Cache configuration
