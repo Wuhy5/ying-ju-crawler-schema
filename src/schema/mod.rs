@@ -24,7 +24,7 @@ pub mod types;
 // 重新导出常用类型
 pub use core::*;
 pub use flow::*;
-pub use pipeline::{Pipeline, PipelineExt, Step, StepCategory, StepTrait};
+pub use pipeline::{Pipeline, Step, StepCategory, StepTrait};
 pub use render::*;
 pub use template::Template;
 pub use types::*;

@@ -1,40 +1,15 @@
 //! 数据处理与转换步骤 (Data Processing Steps)
+//!
+//! 本模块仅包含数据处理步骤的数据结构定义。
+//! 运行时验证逻辑请使用 `crate::runtime` 模块。
 
-use crate::{
-    error::{CrawlerError, ValidationErrors},
-    schema::{
-        pipeline::{StepCategory, StepTrait},
-        template::Template,
-        types::{CacheScope, Identifier},
-    },
+use crate::schema::{
+    pipeline::{StepCategory, StepTrait},
+    template::Template,
+    types::{CacheScope, Identifier},
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-/// ItemSummary的有效字段列表
-const ITEM_SUMMARY_FIELDS: &[&str] = &[
-    "id",
-    "title",
-    "url",
-    "media_type",
-    "cover",
-    "summary",
-    "tags",
-    "meta",
-];
-
-/// ItemDetail的有效字段列表
-const ITEM_DETAIL_FIELDS: &[&str] = &[
-    "id",
-    "title",
-    "url",
-    "media_type",
-    "cover",
-    "description",
-    "metadata",
-    "tags",
-    "content",
-];
 
 /// 字符串操作: 模板步骤 (StepStringTemplate)
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -193,33 +168,6 @@ impl StepTrait for StepMapField {
 
     fn output_variable(&self) -> Option<&str> {
         Some(&self.output)
-    }
-
-    fn validate(&self, errors: &mut ValidationErrors) {
-        // 验证target类型 (静态schema验证)
-        if self.target != "item_summary" && self.target != "item_detail" {
-            errors.push(CrawlerError::InvalidConfigValue {
-                field: "target".to_string(),
-                reason: "必须是 'item_summary' 或 'item_detail'".to_string(),
-            });
-            return;
-        }
-
-        // 验证字段映射
-        let valid_fields = if self.target == "item_summary" {
-            ITEM_SUMMARY_FIELDS
-        } else {
-            ITEM_DETAIL_FIELDS
-        };
-
-        for mapping in &self.mappings {
-            if !valid_fields.contains(&mapping.to.as_str()) {
-                errors.push(CrawlerError::InvalidFieldMapping {
-                    field: mapping.to.clone(),
-                    model: self.target.clone(),
-                });
-            }
-        }
     }
 }
 

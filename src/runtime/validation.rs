@@ -10,8 +10,33 @@ use std::collections::{HashMap, HashSet};
 
 use crate::{
     error::{CrawlerError, ValidationErrors, ValidationResult},
-    schema::{Component, CrawlerRule, FlowTrait, Pipeline, Step, StepTrait},
+    schema::{Component, CrawlerRule, FlowTrait, Pipeline, Step},
 };
+
+/// ItemSummary的有效字段列表
+const ITEM_SUMMARY_FIELDS: &[&str] = &[
+    "id",
+    "title",
+    "url",
+    "media_type",
+    "cover",
+    "summary",
+    "tags",
+    "meta",
+];
+
+/// ItemDetail的有效字段列表
+const ITEM_DETAIL_FIELDS: &[&str] = &[
+    "id",
+    "title",
+    "url",
+    "media_type",
+    "cover",
+    "description",
+    "metadata",
+    "tags",
+    "content",
+];
 
 /// 规则验证Trait
 pub trait RuleValidate {
@@ -88,7 +113,7 @@ impl<'a> RuleValidator<'a> {
             for component_name in components.keys() {
                 let mut visited = HashSet::new();
                 let mut path = Vec::new();
-                if self.detect_cycle(component_name, components, &mut visited, &mut path) {
+                if Self::detect_cycle(component_name, components, &mut visited, &mut path) {
                     self.errors.push(CrawlerError::CircularReference {
                         path: path.join(" -> "),
                     });
@@ -99,7 +124,6 @@ impl<'a> RuleValidator<'a> {
 
     /// 检测组件调用循环
     fn detect_cycle(
-        &self,
         component_name: &str,
         components: &HashMap<String, Component>,
         visited: &mut HashSet<String>,
@@ -116,7 +140,7 @@ impl<'a> RuleValidator<'a> {
         if let Some(component) = components.get(component_name) {
             for step in &component.pipeline {
                 if let Step::Call(call) = step
-                    && self.detect_cycle(&call.component, components, visited, path)
+                    && Self::detect_cycle(&call.component, components, visited, path)
                 {
                     return true;
                 }
@@ -169,16 +193,45 @@ impl<'a> RuleValidator<'a> {
                         module: module.to_string(),
                     });
                 }
+                // 验证call格式
+                if !script.call.contains('.') {
+                    self.errors.push(CrawlerError::InvalidConfigValue {
+                        field: format!("{}.call", path),
+                        reason: "格式必须为 '模块名.函数名'".to_string(),
+                    });
+                }
+            }
+            Step::MapField(map_field) => {
+                // 验证target类型
+                if map_field.target != "item_summary" && map_field.target != "item_detail" {
+                    self.errors.push(CrawlerError::InvalidConfigValue {
+                        field: format!("{}.target", path),
+                        reason: "必须是 'item_summary' 或 'item_detail'".to_string(),
+                    });
+                } else {
+                    // 验证字段映射
+                    let valid_fields = if map_field.target == "item_summary" {
+                        ITEM_SUMMARY_FIELDS
+                    } else {
+                        ITEM_DETAIL_FIELDS
+                    };
+
+                    for mapping in &map_field.mappings {
+                        if !valid_fields.contains(&mapping.to.as_str()) {
+                            self.errors.push(CrawlerError::InvalidFieldMapping {
+                                field: mapping.to.clone(),
+                                model: map_field.target.clone(),
+                            });
+                        }
+                    }
+                }
             }
             Step::LoopForEach(loop_step) => {
                 // 递归验证子管道
                 self.validate_pipeline(&format!("{}.pipeline", path), &loop_step.pipeline);
             }
             _ => {
-                // 其他步骤使用默认验证
-                let mut step_errors = ValidationErrors::new();
-                step.validate(&mut step_errors);
-                self.errors.extend(step_errors);
+                // 其他步骤无需额外验证
             }
         }
     }

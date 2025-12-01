@@ -38,5 +38,5 @@ pub mod runtime;
 
 // 重新导出常用类型
 pub use error::{CrawlerError, ValidationErrors, ValidationResult};
-pub use runtime::{RenderOptions, RuleValidate, TemplateExt};
+pub use runtime::{LimitsExt, PipelineExt, RenderOptions, RuleValidate, TemplateExt};
 pub use schema::*;

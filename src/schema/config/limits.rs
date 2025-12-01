@@ -1,9 +1,7 @@
 //! 运行时限制配置 (RuntimeLimits)
 //!
-//! 提供对运行时资源使用的限制，防止：
-//! - 无限递归
-//! - 内存耗尽
-//! - 超时问题
+//! 定义运行时资源使用的限制配置。
+//! 实际的限制检查逻辑在 `crate::runtime` 模块中实现。
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -109,60 +107,6 @@ impl RuntimeLimits {
             max_response_size: Some(5 * 1024 * 1024), // 5MB
         }
     }
-
-    /// 验证管道长度
-    pub fn check_pipeline_length(&self, length: usize) -> Result<(), crate::error::CrawlerError> {
-        if length > self.max_pipeline_length {
-            Err(crate::error::CrawlerError::ResourceLimitExceeded {
-                limit_type: "管道长度".to_string(),
-                current: length,
-                max: self.max_pipeline_length,
-            })
-        } else {
-            Ok(())
-        }
-    }
-
-    /// 验证递归深度
-    pub fn check_recursion_depth(&self, depth: usize) -> Result<(), crate::error::CrawlerError> {
-        if depth > self.max_recursion_depth {
-            Err(crate::error::CrawlerError::RecursionLimitExceeded {
-                current: depth,
-                max: self.max_recursion_depth,
-            })
-        } else {
-            Ok(())
-        }
-    }
-
-    /// 验证变量数量
-    pub fn check_variable_count(&self, count: usize) -> Result<(), crate::error::CrawlerError> {
-        if count > self.max_variables {
-            Err(crate::error::CrawlerError::ResourceLimitExceeded {
-                limit_type: "变量数量".to_string(),
-                current: count,
-                max: self.max_variables,
-            })
-        } else {
-            Ok(())
-        }
-    }
-
-    /// 验证循环迭代次数
-    pub fn check_loop_iterations(
-        &self,
-        iterations: usize,
-    ) -> Result<(), crate::error::CrawlerError> {
-        if iterations > self.max_loop_iterations {
-            Err(crate::error::CrawlerError::ResourceLimitExceeded {
-                limit_type: "循环迭代次数".to_string(),
-                current: iterations,
-                max: self.max_loop_iterations,
-            })
-        } else {
-            Ok(())
-        }
-    }
 }
 
 // 默认值函数
@@ -199,13 +143,6 @@ mod tests {
         let limits = RuntimeLimits::default();
         assert_eq!(limits.max_pipeline_length, DEFAULT_MAX_PIPELINE_LENGTH);
         assert_eq!(limits.max_recursion_depth, DEFAULT_MAX_RECURSION_DEPTH);
-    }
-
-    #[test]
-    fn test_check_pipeline_length() {
-        let limits = RuntimeLimits::default();
-        assert!(limits.check_pipeline_length(50).is_ok());
-        assert!(limits.check_pipeline_length(200).is_err());
     }
 
     #[test]

@@ -1,20 +1,20 @@
 //! 管道与步骤 (Pipeline & Step)
+//!
+//! 本模块仅包含管道和步骤的数据结构定义。
+//! 运行时验证逻辑请使用 `crate::runtime` 模块。
 
 pub mod steps;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 
 pub use steps::*;
 
-use crate::{
-    error::{CrawlerError, ValidationErrors},
-    schema::template::Template,
-};
+use crate::schema::template::Template;
 
 /// 步骤Trait (StepTrait)
-/// 为步骤提供统一的接口，支持插件系统和验证。
+/// 为步骤提供统一的元数据接口。
+/// 运行时验证逻辑请使用 `crate::runtime` 模块中的扩展 trait。
 pub trait StepTrait {
     /// 步骤的唯一名称标识
     fn name(&self) -> &'static str;
@@ -29,7 +29,7 @@ pub trait StepTrait {
         StepCategory::Other
     }
 
-    /// 获取此步骤使用的所有模板
+    /// 获取此步骤使用的所有模板（用于静态分析）
     fn templates(&self) -> Vec<&Template> {
         Vec::new()
     }
@@ -37,17 +37,6 @@ pub trait StepTrait {
     /// 获取此步骤的输出变量名
     fn output_variable(&self) -> Option<&str> {
         None
-    }
-
-    /// 获取此步骤依赖的变量名（从模板中提取）
-    /// 注意：此方法需要使用 runtime::TemplateExt trait
-    fn required_variables(&self) -> HashSet<String> {
-        HashSet::new()
-    }
-
-    /// 验证步骤配置（基本验证，不含运行时逻辑）
-    fn validate(&self, _errors: &mut ValidationErrors) {
-        // 默认不做任何验证，具体验证逻辑由 runtime 模块提供
     }
 }
 
@@ -156,74 +145,6 @@ impl StepTrait for Step {
     fn output_variable(&self) -> Option<&str> {
         self.as_trait().output_variable()
     }
-
-    fn required_variables(&self) -> HashSet<String> {
-        self.as_trait().required_variables()
-    }
-
-    fn validate(&self, errors: &mut ValidationErrors) {
-        self.as_trait().validate(errors)
-    }
 }
 
-/// 管道扩展trait
-pub trait PipelineExt {
-    /// 验证管道中的所有步骤
-    fn validate(&self) -> Result<(), CrawlerError>;
-
-    /// 获取管道中所有步骤的输出变量
-    fn output_variables(&self) -> HashSet<String>;
-
-    /// 获取管道依赖的所有外部变量
-    fn required_external_variables(&self) -> HashSet<String>;
-}
-
-impl PipelineExt for Pipeline {
-    fn validate(&self) -> Result<(), CrawlerError> {
-        let mut errors = ValidationErrors::new();
-
-        for (index, step) in self.iter().enumerate() {
-            let mut step_errors = ValidationErrors::new();
-            step.validate(&mut step_errors);
-
-            for err in step_errors {
-                errors.push(CrawlerError::PipelineValidation {
-                    step_index: index,
-                    message: err.to_string(),
-                });
-            }
-        }
-
-        errors.into_result()
-    }
-
-    fn output_variables(&self) -> HashSet<String> {
-        self.iter()
-            .filter_map(|step| step.output_variable())
-            .map(|s| s.to_string())
-            .collect()
-    }
-
-    fn required_external_variables(&self) -> HashSet<String> {
-        let mut required: HashSet<String> = HashSet::new();
-        let mut defined: HashSet<String> = HashSet::new();
-
-        for step in self.iter() {
-            // 收集此步骤需要的变量（排除已定义的）
-            for var in step.required_variables() {
-                let root_var = var.split('.').next().unwrap_or(&var);
-                let root_var = root_var.split('[').next().unwrap_or(root_var);
-                if !defined.contains(root_var) {
-                    required.insert(root_var.to_string());
-                }
-            }
-
-            // 添加此步骤定义的变量
-            if let Some(output) = step.output_variable() {
-                defined.insert(output.to_string());
-            }
-        }
-
-        required
-    }
-}
+// PipelineExt trait 已移到 runtime 模块

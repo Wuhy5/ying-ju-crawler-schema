@@ -1,12 +1,12 @@
 //! 核心操作步骤 (Core Steps)
+//!
+//! 本模块仅包含核心步骤的数据结构定义。
+//! 运行时验证逻辑请使用 `crate::runtime` 模块。
 
-use crate::{
-    error::ValidationErrors,
-    schema::{
-        pipeline::{StepCategory, StepTrait},
-        template::Template,
-        types::{ExtractType, HttpMethod, Identifier},
-    },
+use crate::schema::{
+    pipeline::{StepCategory, StepTrait},
+    template::Template,
+    types::{ExtractType, HttpMethod, Identifier},
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -231,16 +231,6 @@ impl StepTrait for StepScript {
 
     fn output_variable(&self) -> Option<&str> {
         Some(&self.output)
-    }
-
-    fn validate(&self, errors: &mut ValidationErrors) {
-        // 验证call格式 (这是静态schema验证，不是运行时验证)
-        if !self.call.contains('.') {
-            errors.push(crate::error::CrawlerError::InvalidConfigValue {
-                field: "call".to_string(),
-                reason: "格式必须为 '模块名.函数名'".to_string(),
-            });
-        }
     }
 }
 
