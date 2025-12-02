@@ -1,9 +1,12 @@
-[package]
-name = "crawler-schema"
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
 version = "1.0.0"
 edition = "2024"
 
-[dependencies]
+[workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.9"
@@ -12,10 +15,6 @@ tera = "1"
 thiserror = "2"
 regex = "1"
 
-[[bin]]
-name = "generate_schema"
-path = "src/bin/generate_schema.rs"
-
-[lib]
-name = "crawler_schema"
-path = "src/lib.rs"
+# workspace internal
+crawler-schema = { path = "crates/schema" }
+crawler-runtime = { path = "crates/runtime" }

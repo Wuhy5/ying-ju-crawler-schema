@@ -1,0 +1,16 @@
+[package]
+name = "crawler-runtime"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+crawler-schema.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tera.workspace = true
+thiserror.workspace = true
+regex.workspace = true
+
+[lib]
+name = "crawler_runtime"
+path = "src/lib.rs"
