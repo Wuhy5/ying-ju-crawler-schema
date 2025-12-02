@@ -24,18 +24,6 @@ pub enum ScriptEngine {
     Lua,
 }
 
-impl ScriptEngine {
-    /// 获取文件扩展名
-    pub fn file_extension(&self) -> &'static str {
-        match self {
-            Self::Rhai => "rhai",
-            Self::JavaScript => "js",
-            Self::Python => "py",
-            Self::Lua => "lua",
-        }
-    }
-}
-
 // ============================================================================
 // 脚本配置
 // ============================================================================

@@ -1,25 +1,55 @@
-//! 运行时模块
+//! # Crawler Runtime - 爬虫运行时库
 //!
-//! 包含爬虫规则的运行时实现：
-//! - 配置合并 (`config`)
-//! - 运行时上下文 (`context`)
-//! - 模板渲染 (`template`)
-//! - 资源限制检查 (`limits`)
-//! - 规则验证 (`validation`)
+//! 为 crawler-schema 提供运行时执行能力，包括：
+//! - 模板渲染
+//! - HTTP 请求
+//! - 数据提取
+//! - 流程执行
 //!
-//! ## 设计理念
+//! ## 架构设计
 //!
-//! Schema 模块只包含纯数据结构定义，所有运行时逻辑都在本模块中实现。
-//! 通过扩展 trait 模式为 schema 类型添加运行时功能。
+//! ```text
+//! CrawlerRuntime (入口)
+//!   ↓
+//! FlowExecutor (流程执行)
+//!   ↓
+//! TemplateRenderer → HttpClient → ExtractEngine
+//!   ↓
+//! 输出结果
+//! ```
 
-pub mod config;
-pub mod context;
+// 错误类型
 pub mod error;
-pub mod template;
-pub mod validation;
 
-pub use config::{ConfigMerge, HttpConfigExt};
-pub use context::RuntimeContext;
+// 上下文管理
+pub mod context;
+
+// 模板引擎
+pub mod template;
+
+// HTTP 客户端
+pub mod http;
+
+// 数据提取器
+pub mod extractor;
+
+// 流程执行器
+pub mod flow;
+
+// 脚本执行引擎
+pub mod script;
+
+// 爬虫运行时主入口
+pub mod crawler;
+
+// 工具函数
+pub mod util;
+
+// 重新导出常用类型
+pub use context::Context;
+pub use crawler::CrawlerRuntime;
 pub use error::RuntimeError;
-pub use template::{escape_html, RenderOptions, TemplateExt};
-pub use validation::{RuleValidate, ValidationError};
+pub use script::{ScriptEngine, RhaiScriptEngine, ScriptContext};
+
+/// 运行时结果类型
+pub type Result<T> = std::result::Result<T, RuntimeError>;

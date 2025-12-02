@@ -51,17 +51,6 @@ pub enum RuntimeError {
     InvalidConfigValue { field: String, reason: String },
 
     // --- 运行时资源限制错误 ---
-    /// 超出资源限制
-    #[error("超出资源限制: {limit_type} (当前: {current}, 最大: {max})")]
-    ResourceLimitExceeded {
-        limit_type: String,
-        current: usize,
-        max: usize,
-    },
-
-    /// 递归深度超限
-    #[error("递归深度超出限制 (当前: {current}, 最大: {max})")]
-    RecursionLimitExceeded { current: usize, max: usize },
 
     /// 执行超时
     #[error("执行超时: {operation} (耗时: {elapsed_ms}ms, 限制: {limit_ms}ms)")]
@@ -70,4 +59,47 @@ pub enum RuntimeError {
         elapsed_ms: u64,
         limit_ms: u64,
     },
+
+    // --- HTTP 相关错误 ---
+    
+    /// HTTP 配置错误
+    #[error("HTTP 配置错误: {0}")]
+    HttpConfig(String),
+
+    /// HTTP 请求错误
+    #[error("HTTP 请求错误: {0}")]
+    HttpRequest(String),
+
+    // --- 数据提取错误 ---
+    
+    /// 数据提取错误
+    #[error("数据提取错误: {0}")]
+    Extraction(String),
+
+    // --- 配置文件错误 ---
+    
+    /// 配置文件错误
+    #[error("配置文件错误: {0}")]
+    Config(String),
+
+    /// 模板验证错误
+    #[error("模板验证错误 '{template}': {error}")]
+    TemplateValidation {
+        template: String,
+        error: String,
+    },
+    
+    // --- 脚本执行错误 ---
+    
+    /// 脚本语法错误
+    #[error("脚本语法错误: {0}")]
+    ScriptSyntax(String),
+    
+    /// 脚本运行时错误
+    #[error("脚本运行时错误: {0}")]
+    ScriptRuntime(String),
+    
+    /// 脚本执行超时
+    #[error("脚本执行超时")]
+    ScriptTimeout,
 }
