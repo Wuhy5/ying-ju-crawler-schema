@@ -4,7 +4,7 @@ use crate::context::Context;
 use crate::Result;
 use crate::extractor::{ExtractValue, StepExecutor};
 use crate::script::{ScriptEngine, ScriptContext};
-use crawler_schema::extract::ScriptStep;
+use crawler_schema::script::{ScriptStep, ScriptSource};
 use std::sync::Arc;
 
 /// 脚本步骤执行器
@@ -34,7 +34,7 @@ impl Default for ScriptExecutor {
 }
 
 impl StepExecutor for ScriptExecutor {
-    fn execute(&self, input: &ExtractValue, context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
         // TODO: 将 ExtractValue 转换为脚本可用的格式
         // TODO: 从 ScriptStep 中提取脚本内容并执行
         // 目前简单返回输入的克隆
@@ -46,15 +46,23 @@ impl StepExecutor for ScriptExecutor {
 pub fn execute_script_step(
     step: &ScriptStep,
     input: ExtractValue,
-    context: &Context,
+    _context: &Context,
     engine: &Arc<dyn ScriptEngine>,
 ) -> Result<ExtractValue> {
-    // 解析脚本步骤配置
-    let script = match step {
-        ScriptStep::Simple(script) => script.clone(),
-        ScriptStep::WithParams { name, params } => {
-            // TODO: 支持参数化脚本调用
-            name.clone()
+    // 解析脚本步骤配置，获取脚本代码
+    let script = match step.source() {
+        ScriptSource::Code(code) => code,
+        ScriptSource::File(path) => {
+            // TODO: 从文件加载脚本
+            return Err(crate::error::RuntimeError::ScriptRuntime(
+                format!("从文件加载脚本暂未实现: {}", path)
+            ));
+        }
+        ScriptSource::Url(url) => {
+            // TODO: 从 URL 加载脚本
+            return Err(crate::error::RuntimeError::ScriptRuntime(
+                format!("从 URL 加载脚本暂未实现: {}", url)
+            ));
         }
     };
     
@@ -70,12 +78,15 @@ pub fn execute_script_step(
         ExtractValue::Null => String::new(),
     };
     
-    // 创建脚本上下文
-    // TODO: 需要实现 Context::get_all_variables() 方法
-    let script_context = ScriptContext::new(
-        input_str,
-        std::collections::HashMap::new(), // TODO: 使用 context.get_all_variables()
-    );
+    // 创建脚本上下文，包含参数
+    let mut variables = std::collections::HashMap::new();
+    if let Some(params) = step.params() {
+        for (key, value) in params {
+            variables.insert(key.clone(), value.clone());
+        }
+    }
+    
+    let script_context = ScriptContext::new(input_str, variables);
     
     // 执行脚本
     let result = engine.execute(&script, &script_context)?;

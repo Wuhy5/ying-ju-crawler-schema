@@ -34,6 +34,7 @@ pub mod core;
 pub mod extract;
 pub mod fields;
 pub mod flow;
+pub mod script;
 pub mod template;
 
 // 重新导出常用类型
@@ -43,4 +44,5 @@ pub use error::SchemaError;
 pub use extract::*;
 pub use fields::*;
 pub use flow::*;
+pub use script::{ScriptConfig, ScriptEngine, ScriptSource, ScriptStep};
 pub use template::Template;

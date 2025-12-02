@@ -60,7 +60,9 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+// 从 script 模块重新导出 ScriptStep
+pub use crate::script::ScriptStep;
 
 // ============================================================================
 // 核心提取器
@@ -225,22 +227,6 @@ pub enum IndexStep {
     Single(i32),
     /// 切片表达式 "start:end" 或 "start:end:step"
     Slice(String),
-}
-
-/// 脚本调用步骤
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(untagged)]
-pub enum ScriptStep {
-    /// 简单脚本名
-    Simple(String),
-    /// 带参数的脚本调用
-    WithParams {
-        /// 脚本名称（`模块.函数` 或 `函数`）
-        name: String,
-        /// 脚本参数
-        #[serde(skip_serializing_if = "Option::is_none")]
-        params: Option<HashMap<String, serde_json::Value>>,
-    },
 }
 
 /// 过滤器配置（结构化形式）

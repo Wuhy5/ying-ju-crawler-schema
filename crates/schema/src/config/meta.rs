@@ -53,7 +53,7 @@ pub struct Meta {
     pub spec_version: String,
     /// 目标网站的主域名。
     pub domain: String,
-    /// 规则主要适用的媒体类型。
+    /// 规则用于的媒体类型。
     pub media_type: MediaType,
     /// 规则的详细描述。
     #[serde(skip_serializing_if = "Option::is_none")]
