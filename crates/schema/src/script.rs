@@ -39,50 +39,46 @@ pub enum ScriptEngine {
 // 脚本调用
 // ============================================================================
 
-/// 脚本调用步骤
+/// 脚本调用配置
 ///
-/// 自包含的脚本调用定义，支持多种形式：
+/// 自包含的脚本定义，支持多种形式：
 ///
 /// # 示例
 ///
 /// ## 最简形式：直接写代码字符串
-/// ```yaml
-/// script: "return input.trim().toUpperCase()"
+/// ```toml
+/// script = "return input.trim().toUpperCase()"
 /// ```
 ///
 /// ## 内联代码（显式指定引擎）
-/// ```yaml
-/// script:
-///   code: |
-///     let result = input.split(",");
-///     return result.map(s => s.trim());
-///   engine: javascript
+/// ```toml
+/// [script]
+/// code = '''
+/// let result = input.split(",");
+/// return result.map(s => s.trim());
+/// '''
+/// engine = "javascript"
 /// ```
 ///
 /// ## 引用外部文件
-/// ```yaml
-/// script:
-///   file: "./scripts/login.js"
+/// ```toml
+/// script = { file = "./scripts/login.js" }
 /// ```
 ///
 /// ## 远程脚本
-/// ```yaml
-/// script:
-///   url: "https://example.com/scripts/utils.js"
-///   function: "processData"
+/// ```toml
+/// script = { url = "https://example.com/scripts/utils.js", function = "processData" }
 /// ```
 ///
 /// ## 带参数调用
-/// ```yaml
-/// script:
-///   code: "return input.replace(params.from, params.to)"
-///   params:
-///     from: "old"
-///     to: "new"
+/// ```toml
+/// [script]
+/// code = "return input.replace(params.from, params.to)"
+/// params = { from = "old", to = "new" }
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
-pub enum ScriptStep {
+pub enum Script {
     /// 简单代码字符串
     /// 直接作为脚本代码执行（使用默认引擎）
     Simple(String),
@@ -130,42 +126,42 @@ pub enum ScriptSource {
 // 实现
 // ============================================================================
 
-impl ScriptStep {
+impl Script {
     /// 获取脚本来源
     pub fn source(&self) -> ScriptSource {
         match self {
-            ScriptStep::Simple(code) => ScriptSource::Code(code.clone()),
-            ScriptStep::Full(config) => config.source.clone(),
+            Script::Simple(code) => ScriptSource::Code(code.clone()),
+            Script::Full(config) => config.source.clone(),
         }
     }
 
     /// 获取脚本引擎
     pub fn engine(&self) -> ScriptEngine {
         match self {
-            ScriptStep::Simple(_) => ScriptEngine::default(),
-            ScriptStep::Full(config) => config.engine.unwrap_or_default(),
+            Script::Simple(_) => ScriptEngine::default(),
+            Script::Full(config) => config.engine.unwrap_or_default(),
         }
     }
 
     /// 获取函数名
     pub fn function(&self) -> Option<&str> {
         match self {
-            ScriptStep::Simple(_) => None,
-            ScriptStep::Full(config) => config.function.as_deref(),
+            Script::Simple(_) => None,
+            Script::Full(config) => config.function.as_deref(),
         }
     }
 
     /// 获取参数
     pub fn params(&self) -> Option<&HashMap<String, serde_json::Value>> {
         match self {
-            ScriptStep::Simple(_) => None,
-            ScriptStep::Full(config) => config.params.as_ref(),
+            Script::Simple(_) => None,
+            Script::Full(config) => config.params.as_ref(),
         }
     }
 }
 
-impl Default for ScriptStep {
+impl Default for Script {
     fn default() -> Self {
-        ScriptStep::Simple(String::new())
+        Script::Simple(String::new())
     }
 }

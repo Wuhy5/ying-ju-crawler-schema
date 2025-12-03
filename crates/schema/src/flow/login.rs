@@ -5,7 +5,7 @@
 //! - `webview`: 网页模式，打开浏览器，用户操作网页，脚本检测状态
 //! - `credential`: 凭证模式，手动粘贴 Cookie/Token/Header 等认证信息
 
-use crate::script::ScriptStep;
+use crate::script::Script;
 use crate::template::Template;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -24,62 +24,44 @@ use serde::{Deserialize, Serialize};
 /// # 示例
 ///
 /// ## 脚本交互模式
-/// ```yaml
-/// login:
-///   type: script
-///   ui:
-///     - type: text
-///       key: username
-///       label: "用户名"
-///     - type: password
-///       key: password
-///       label: "密码"
-///     - type: image
-///       key: captcha_img
-///       action:
-///         name: refresh_captcha
-///     - type: text
-///       key: captcha
-///       label: "验证码"
-///   init_script:
-///     name: init_login
-///   login_script:
-///     name: do_login
+/// ```toml
+/// [login]
+/// type = "script"
+/// ui = [
+///   { type = "text", key = "username", label = "用户名" },
+///   { type = "password", key = "password", label = "密码" },
+///   { type = "image", key = "captcha_img", action = { name = "refresh_captcha" } },
+///   { type = "text", key = "captcha", label = "验证码" },
+/// ]
+/// init_script = { name = "init_login" }
+/// login_script = { name = "do_login" }
 /// ```
 ///
 /// ## WebView 模式
-/// ```yaml
-/// login:
-///   type: webview
-///   start_url: "https://example.com/login"
-///   check_script: "return document.querySelector('.user-info') !== null;"
-///   finish_script:
-///     name: save_cookies
+/// ```toml
+/// [login]
+/// type = "webview"
+/// start_url = "https://example.com/login"
+/// check_script = "return document.querySelector('.user-info') !== null;"
+/// finish_script = { name = "save_cookies" }
 /// ```
 ///
 /// ## Credential 模式（Cookie）
-/// ```yaml
-/// login:
-///   type: credential
-///   tip: "请从浏览器开发者工具中复制 Cookie"
-///   docs_url: "https://example.com/help/cookie"
-///   storage:
-///     type: cookie
+/// ```toml
+/// [login]
+/// type = "credential"
+/// tip = "请从浏览器开发者工具中复制 Cookie"
+/// docs_url = "https://example.com/help/cookie"
+/// storage = [{ type = "cookie" }]
 /// ```
 ///
 /// ## Credential 模式（Header Token）
-/// ```yaml
-/// login:
-///   type: credential
-///   tip: "请输入您的 API Token"
-///   fields:
-///     - key: token
-///       label: "API Token"
-///       field_type: password
-///   storage:
-///     type: header
-///     header_name: "Authorization"
-///     header_template: "Bearer {{ token }}"
+/// ```toml
+/// [login]
+/// type = "credential"
+/// tip = "请输入您的 API Token"
+/// fields = [{ key = "token", label = "API Token", field_type = "password" }]
+/// storage = [{ type = "header", header_name = "Authorization", header_template = "Bearer {{ token }}" }]
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
@@ -124,10 +106,10 @@ pub struct ScriptLoginFlow {
     /// 界面打开时自动执行的脚本
     /// 例如：自动加载图形验证码，或获取初始 Cookie
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub init_script: Option<ScriptStep>,
+    pub init_script: Option<Script>,
 
     /// 用户点击界面底部"登录/确认"按钮时执行的主逻辑脚本
-    pub login_script: ScriptStep,
+    pub login_script: Script,
 }
 
 /// 登录界面 UI 元素定义
@@ -198,7 +180,7 @@ pub struct ButtonElement {
 
     /// 点击按钮触发的脚本逻辑
     /// 例如：获取短信验证码、刷新图形验证码
-    pub action: ScriptStep,
+    pub action: Script,
 
     /// 是否禁用（可选，用于条件性禁用按钮）
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -219,7 +201,7 @@ pub struct ImageElement {
 
     /// 点击图片触发的脚本（通常用于刷新验证码）
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub action: Option<ScriptStep>,
+    pub action: Option<Script>,
 }
 
 // ============================================================================
@@ -273,7 +255,7 @@ pub struct WebViewLoginFlow {
     /// 登录成功后（WebView 关闭前）执行的整理脚本
     /// 用于从 WebView 提取特定 Cookie/LocalStorage 并保存到全局变量
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub finish_script: Option<ScriptStep>,
+    pub finish_script: Option<Script>,
 
     /// 登录超时时间（秒，默认 300）
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -321,7 +303,7 @@ pub struct CredentialLoginFlow {
 
     /// 凭证验证脚本（可选，验证用户输入的凭证是否有效）
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub validate_script: Option<ScriptStep>,
+    pub validate_script: Option<Script>,
 }
 
 /// 凭证存储方式

@@ -10,16 +10,13 @@ use std::collections::HashMap;
 ///
 /// # 示例
 ///
-/// ```yaml
-/// components:
-///   parse_video_url:
-///     description: "解析加密的视频地址"
-///     inputs:
-///       encrypted_url: ""
-///     extractor:
-///       selector: "{{ encrypted_url }}"
-///       transform:
-///         script: "decrypt.parse_m3u8"
+/// ```toml
+/// [components.parse_video_url]
+/// description = "解析加密的视频地址"
+/// inputs = { encrypted_url = "" }
+///
+/// [components.parse_video_url.extractor]
+/// steps = [{ script = "decrypt.parse_m3u8" }]
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

@@ -30,11 +30,6 @@ impl StepExecutorFactory {
                     selector.clone(),
                 ))
             }
-            ExtractStep::Xpath(selector) => {
-                Box::new(crate::extractor::selector::xpath::XpathSelectorExecutor::new(
-                    selector.clone(),
-                ))
-            }
             ExtractStep::Regex(regex) => {
                 Box::new(crate::extractor::selector::regex::RegexSelectorExecutor::new(
                     regex.clone(),

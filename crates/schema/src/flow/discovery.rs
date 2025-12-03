@@ -1,6 +1,6 @@
 //! 发现页流程 (DiscoveryFlow)
 
-use crate::{fields::ItemFields, template::Template};
+use crate::{extract::FieldExtractor, fields::ItemFields, template::Template};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -19,9 +19,11 @@ use super::common::{FilterGroup, PaginationConfig};
 /// pagination_type = "page_number"
 /// start_page = 1
 ///
-/// [discovery.fields]
-/// title.steps = [{ css = ".title" }, { filter = "trim" }]
-/// url.steps = [{ css = "a" }, { attr = "href" }, { filter = "absolute_url" }]
+/// [discovery.fields.title]
+/// steps = [{ css = ".title" }, { filter = "trim" }]
+///
+/// [discovery.fields.url]
+/// steps = [{ css = "a" }, { attr = "href" }]
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -38,100 +40,214 @@ pub struct DiscoveryFlow {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pagination: Option<PaginationConfig>,
 
-    /// 分类来源（可选）
+    /// 分类列表（可选）
+    /// 静态数组或动态获取配置
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub categories: Option<CategorySource>,
+    pub categories: Option<OptionList>,
 
-    /// 动态筛选器（可选）
+    /// 筛选器组列表（可选）
+    /// 静态数组或动态获取配置
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub filters: Option<FiltersSource>,
+    pub filters: Option<FilterList>,
 
-    /// 列表项字段定义
+    /// list 列表提取规则
+    pub list: FieldExtractor,
+
+    /// 将列表项映射为最终数据结构的字段提取规则
     pub fields: ItemFields,
 }
 
-/// 分类来源定义
+// ============================================================================
+// 选项列表（分类/筛选选项通用）
+// ============================================================================
+
+/// 选项列表
+///
+/// 支持静态定义或从数据源动态获取
+///
+/// # 示例
+///
+/// ## 静态定义
+/// ```toml
+/// categories = [
+///   { key = "movie", label = "电影" },
+///   { key = "tv", label = "电视剧" },
+/// ]
+/// ```
+///
+/// ## 动态获取（HTML）
+/// ```toml
+/// [categories]
+/// url = "https://example.com/categories"
+/// list.steps = [{ css = ".category-item" }]
+///
+/// [categories.fields]
+/// key.steps = [{ attr = "data-id" }]
+/// label.steps = [{ css = ".name" }]
+/// ```
+///
+/// ## 动态获取（JSON API）
+/// ```toml
+/// [categories]
+/// url = "https://api.example.com/categories"
+/// list.steps = [{ json = "$.data.categories[*]" }]
+///
+/// [categories.fields]
+/// key.steps = [{ json = "$.id" }]
+/// label.steps = [{ json = "$.name" }]
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum CategorySource {
-    /// 静态分类（手动配置）
-    Static { items: Vec<CategoryItem> },
-    
-    /// 动态分类（从页面提取）
-    Dynamic {
-        /// 分类数据源 URL
-        url: Template,
-        /// 分类列表选择器
-        selector: String,
-        /// 分类项字段定义
-        fields: CategoryFields,
-    },
+#[serde(untagged)]
+pub enum OptionList {
+    /// 静态选项列表
+    Static(Vec<OptionItem>),
+
+    /// 动态获取配置
+    Dynamic(Box<DynamicOptionList>),
 }
 
-/// 分类项
+/// 选项项（静态定义）
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct CategoryItem {
-    /// 分类唯一标识（用于请求参数）
+pub struct OptionItem {
+    /// 选项标识（用于 URL 参数）
     pub key: String,
-    /// 展示名称
+    /// 显示名称
     pub label: String,
-    /// 可选：请求使用的值（不提供则默认用 key）
+    /// 请求值（可选，默认使用 key）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
 }
 
-/// 分类字段定义
+/// 动态选项列表配置
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct CategoryFields {
-    /// 分类标识提取规则
-    pub key: String,
-    /// 分类名称提取规则
-    pub label: String,
-    /// 分类值提取规则（可选）
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value: Option<String>,
+pub struct DynamicOptionList {
+    /// 数据源 URL
+    pub url: Template,
+
+    /// 列表提取规则
+    /// 提取出选项列表的数组
+    pub list: FieldExtractor,
+
+    /// 选项字段提取规则
+    pub fields: OptionFields,
 }
 
-/// 筛选器来源定义
+/// 选项字段定义（用于动态提取）
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum FiltersSource {
-    /// 静态筛选组
-    Static { groups: Vec<FilterGroup> },
-    
-    /// 动态筛选组（从页面提取）
-    Dynamic {
-        /// 筛选器数据源 URL
-        url: Template,
-        /// 筛选组列表选择器
-        selector: String,
-        /// 筛选组字段定义
-        fields: FilterGroupFields,
-    },
+#[serde(deny_unknown_fields)]
+pub struct OptionFields {
+    /// 选项标识提取规则
+    pub key: FieldExtractor,
+    /// 显示名称提取规则
+    pub label: FieldExtractor,
+    /// 请求值提取规则（可选）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<FieldExtractor>,
 }
 
-/// 筛选组字段定义
+// ============================================================================
+// 筛选器组列表
+// ============================================================================
+
+/// 筛选器组列表
+///
+/// 支持静态定义或从数据源动态获取
+///
+/// # 示例
+///
+/// ## 静态定义
+/// ```toml
+/// [[filters]]
+/// key = "year"
+/// name = "年份"
+/// options = [
+///   { key = "2024", name = "2024年" },
+///   { key = "2023", name = "2023年" },
+/// ]
+///
+/// [[filters]]
+/// key = "area"
+/// name = "地区"
+/// options = [
+///   { key = "cn", name = "中国" },
+///   { key = "us", name = "美国" },
+/// ]
+/// ```
+///
+/// ## 动态获取
+/// ```toml
+/// [filters]
+/// url = "https://example.com/filters"
+/// list.steps = [{ css = ".filter-group" }]
+///
+/// [filters.fields]
+/// key.steps = [{ attr = "data-key" }]
+/// name.steps = [{ css = ".group-name" }]
+///
+/// [filters.fields.options]
+/// list.steps = [{ css = ".filter-option" }]
+///
+/// [filters.fields.options.fields]
+/// key.steps = [{ attr = "data-value" }]
+/// name.steps = [{ css = "text()" }]
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum FilterList {
+    /// 静态筛选器组列表
+    Static(Vec<FilterGroup>),
+
+    /// 动态获取配置
+    Dynamic(Box<DynamicFilterList>),
+}
+
+/// 动态筛选器组列表配置
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct DynamicFilterList {
+    /// 数据源 URL
+    pub url: Template,
+
+    /// 筛选组列表提取规则
+    pub list: FieldExtractor,
+
+    /// 筛选组字段提取规则
+    pub fields: FilterGroupFields,
+}
+
+/// 筛选组字段定义（用于动态提取）
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FilterGroupFields {
+    /// 筛选组标识提取规则
+    pub key: FieldExtractor,
     /// 筛选组名称提取规则
-    pub name: String,
-    /// 筛选组key提取规则
-    pub key: String,
-    /// 选项列表选择器
-    pub options_selector: String,
-    /// 选项字段定义
-    pub option_fields: FilterOptionFields,
+    pub name: FieldExtractor,
+    /// 是否多选提取规则（可选）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub multiselect: Option<FieldExtractor>,
+    /// 选项列表配置
+    pub options: NestedOptionList,
+}
+
+/// 嵌套选项列表（用于筛选组内的选项）
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct NestedOptionList {
+    /// 选项列表提取规则
+    pub list: FieldExtractor,
+    /// 选项字段提取规则
+    pub fields: FilterOptionFields,
 }
 
 /// 筛选选项字段定义
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FilterOptionFields {
+    /// 选项标识/值提取规则
+    pub key: FieldExtractor,
     /// 选项名称提取规则
-    pub name: String,
-    /// 选项值提取规则
-    pub value: String,
+    pub name: FieldExtractor,
 }

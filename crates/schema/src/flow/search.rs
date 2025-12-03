@@ -1,6 +1,6 @@
 //! 搜索流程 (SearchFlow)
 
-use crate::{fields::ItemFields, template::Template};
+use crate::{FieldExtractor, fields::ItemFields, template::Template};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -37,6 +37,9 @@ pub struct SearchFlow {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pagination: Option<PaginationConfig>,
 
-    /// 列表项字段定义
+    /// list 列表提取规则
+    pub list: FieldExtractor,
+
+    /// 将列表项映射为最终数据结构的字段提取规则
     pub fields: ItemFields,
 }

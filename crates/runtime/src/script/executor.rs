@@ -4,7 +4,7 @@ use crate::context::Context;
 use crate::Result;
 use crate::extractor::{ExtractValue, StepExecutor};
 use crate::script::{ScriptEngine, ScriptContext};
-use crawler_schema::script::{ScriptStep, ScriptSource};
+use crawler_schema::script::{Script, ScriptSource};
 use std::sync::Arc;
 
 /// 脚本步骤执行器
@@ -44,7 +44,7 @@ impl StepExecutor for ScriptExecutor {
 
 /// 执行单个脚本步骤
 pub fn execute_script_step(
-    step: &ScriptStep,
+    step: &Script,
     input: ExtractValue,
     _context: &Context,
     engine: &Arc<dyn ScriptEngine>,

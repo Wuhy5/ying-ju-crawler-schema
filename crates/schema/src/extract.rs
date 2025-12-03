@@ -60,9 +60,7 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-// 从 script 模块重新导出 ScriptStep
-pub use crate::script::ScriptStep;
+use crate::script::Script;
 
 // ============================================================================
 // 核心提取器
@@ -126,7 +124,7 @@ pub struct FieldExtractor {
 /// 提取步骤 (ExtractStep)
 ///
 /// 单个原子化操作。步骤类型：
-/// - **选择步骤**：css, json, xpath, regex
+/// - **选择步骤**：css, json, regex
 /// - **过滤步骤**：filter, attr, index
 /// - **特殊步骤**：const, var, script
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -138,9 +136,6 @@ pub enum ExtractStep {
 
     /// JSONPath 表达式（JSON）
     Json(SelectorStep),
-
-    /// XPath 表达式（XML/HTML）
-    Xpath(SelectorStep),
 
     /// 正则表达式（文本）
     Regex(RegexStep),
@@ -163,7 +158,7 @@ pub enum ExtractStep {
     Var(String),
 
     /// 脚本调用
-    Script(ScriptStep),
+    Script(Script),
 }
 
 // ============================================================================

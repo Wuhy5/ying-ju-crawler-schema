@@ -44,5 +44,5 @@ pub use error::SchemaError;
 pub use extract::*;
 pub use fields::*;
 pub use flow::*;
-pub use script::{ScriptConfig, ScriptEngine, ScriptSource, ScriptStep};
+pub use script::{Script, ScriptConfig, ScriptEngine, ScriptSource};
 pub use template::Template;
