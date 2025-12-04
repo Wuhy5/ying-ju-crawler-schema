@@ -3,7 +3,7 @@
 //! 提供模板语法验证功能
 
 use crate::{Result, template::TemplateEngine};
-use crawler_schema::Template;
+use crawler_schema::template::Template;
 
 /// 模板验证器 trait
 pub trait TemplateValidator {

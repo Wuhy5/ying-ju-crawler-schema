@@ -25,10 +25,6 @@
 //!   - `User-Agent: MyBot/{{ version }}`
 //! - 支持表达式与嵌套：如 `{{ user.name }}`、`{{ items[0] }}`
 
-// 通用错误模块
-pub mod error;
-
-// Schema 模块
 pub mod config;
 pub mod core;
 pub mod extract;
@@ -36,13 +32,3 @@ pub mod fields;
 pub mod flow;
 pub mod script;
 pub mod template;
-
-// 重新导出常用类型
-pub use config::*;
-pub use core::*;
-pub use error::SchemaError;
-pub use extract::*;
-pub use fields::*;
-pub use flow::*;
-pub use script::{Script, ScriptConfig, ScriptEngine, ScriptSource};
-pub use template::Template;

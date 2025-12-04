@@ -3,7 +3,7 @@
 //! 为 schema::Template 提供渲染能力
 
 use crate::{Result, context::Context, template::TemplateEngine};
-use crawler_schema::Template;
+use crawler_schema::template::Template;
 
 /// 模板渲染器 trait
 ///

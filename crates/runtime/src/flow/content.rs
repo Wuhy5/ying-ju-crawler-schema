@@ -2,7 +2,7 @@
 
 use crate::{Result, context::Context, flow::FlowExecutor};
 use async_trait::async_trait;
-use crawler_schema::ContentFlow;
+use crawler_schema::flow::ContentFlow;
 
 /// 内容请求
 #[derive(Debug, Clone)]

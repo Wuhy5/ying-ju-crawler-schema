@@ -10,6 +10,7 @@ use serde_json::Value;
 /// 表示提取过程中的中间值,支持多种数据类型
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
+#[derive(Default)]
 pub enum ExtractValue {
     /// 字符串
     String(String),
@@ -20,6 +21,7 @@ pub enum ExtractValue {
     /// 数组
     Array(Vec<ExtractValue>),
     /// 空值
+    #[default]
     Null,
 }
 
@@ -56,7 +58,7 @@ impl ExtractValue {
     pub fn from_json(value: &Value) -> Self {
         match value {
             Value::String(s) => Self::String(s.clone()),
-            Value::Array(arr) => Self::Array(arr.iter().map(|v| Self::from_json(v)).collect()),
+            Value::Array(arr) => Self::Array(arr.iter().map(Self::from_json).collect()),
             _ => Self::Json(value.clone()),
         }
     }
@@ -86,6 +88,30 @@ impl ExtractValue {
     pub fn is_array(&self) -> bool {
         matches!(self, Self::Array(_))
     }
+
+    /// 是否为真值
+    ///
+    /// 用于条件判断，以下情况返回 false：
+    /// - Null
+    /// - 空字符串
+    /// - 空数组
+    /// - JSON 的 false、null、空字符串、空数组
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Self::Null => false,
+            Self::String(s) => !s.is_empty(),
+            Self::Html(h) => !h.is_empty(),
+            Self::Array(arr) => !arr.is_empty(),
+            Self::Json(v) => match v {
+                Value::Null => false,
+                Value::Bool(b) => *b,
+                Value::String(s) => !s.is_empty(),
+                Value::Array(arr) => !arr.is_empty(),
+                Value::Number(_) => true,
+                Value::Object(_) => true,
+            },
+        }
+    }
 }
 
 impl From<String> for ExtractValue {
@@ -103,11 +129,5 @@ impl From<&str> for ExtractValue {
 impl From<Value> for ExtractValue {
     fn from(v: Value) -> Self {
         Self::Json(v)
-    }
-}
-
-impl Default for ExtractValue {
-    fn default() -> Self {
-        Self::Null
     }
 }

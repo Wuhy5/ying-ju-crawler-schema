@@ -4,17 +4,19 @@
 
 pub mod attr;
 pub mod component;
+pub mod condition;
 pub mod const_value;
 pub mod css;
 pub mod index;
 pub mod json;
+pub mod map;
 pub mod noop;
 pub mod regex;
 pub mod var;
-pub mod xpath;
 
 pub use component::ComponentExecutor;
+pub use condition::ConditionExecutor;
 pub use css::CssSelectorExecutor;
 pub use json::JsonSelectorExecutor;
+pub use map::MapExecutor;
 pub use regex::RegexSelectorExecutor;
-pub use xpath::XpathSelectorExecutor;

@@ -3,7 +3,10 @@
 //! 提供便捷的请求构建接口
 
 use crate::{Result, context::Context, http::HttpClient, template::TemplateRenderer};
-use crawler_schema::{HttpMethod, RequestConfig, Template};
+use crawler_schema::{
+    config::{HttpMethod, RequestConfig},
+    template::Template,
+};
 
 /// 请求构建器
 pub struct RequestBuilder<'a> {

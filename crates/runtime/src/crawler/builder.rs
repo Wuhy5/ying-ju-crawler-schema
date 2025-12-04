@@ -8,7 +8,7 @@ use crate::{
     error::RuntimeError,
     webview::{SharedWebViewProvider, noop_provider},
 };
-use crawler_schema::CrawlerRule;
+use crawler_schema::core::CrawlerRule;
 use std::path::Path;
 
 /// 爬虫运行时构建器

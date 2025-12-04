@@ -6,7 +6,7 @@ use crate::{
     error::RuntimeError,
     extractor::{ExtractValue, StepExecutor},
 };
-use crawler_schema::RegexStep;
+use crawler_schema::extract::RegexStep;
 
 /// 正则表达式选择器执行器
 pub struct RegexSelectorExecutor {
@@ -20,7 +20,7 @@ impl RegexSelectorExecutor {
 }
 
 impl StepExecutor for RegexSelectorExecutor {
-    fn execute(&self, input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, input: ExtractValue, _context: &Context) -> Result<ExtractValue> {
         // 获取字符串
         let text = input
             .as_string()
@@ -79,7 +79,7 @@ mod tests {
         let input = ExtractValue::String("age: 25".to_string());
         let context = Context::new();
 
-        let result = executor.execute(&input, &context).unwrap();
+        let result = executor.execute(input, &context).unwrap();
         assert_eq!(result.as_string(), Some("25".to_string()));
     }
 }

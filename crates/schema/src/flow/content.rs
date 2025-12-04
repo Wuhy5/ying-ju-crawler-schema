@@ -1,6 +1,6 @@
 //! 内容页流程 (ContentFlow)
 
-use crate::{fields::ContentFields, template::Template};
+use crate::{config::HttpConfig, fields::ContentFields, template::Template};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -33,6 +33,12 @@ pub struct ContentFlow {
     /// 内容页 URL 模板
     /// 约定输入变量: {{ play_url }} 或 {{ chapter_url }}
     pub url: Template,
+
+    /// 流程级 HTTP 配置（可选）
+    ///
+    /// 覆盖全局 HTTP 配置
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http: Option<HttpConfig>,
 
     /// 内容字段提取规则
     pub fields: ContentFields,

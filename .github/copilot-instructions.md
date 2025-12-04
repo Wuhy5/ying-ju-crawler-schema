@@ -101,6 +101,7 @@ impl TemplateExt for Template { /* ... */ }
 - **完成代码任务后必须执行 `cargo +nightly fmt` 格式化代码**
 - 使用 Clippy 检查代码质量（`cargo clippy`）
 - 部分警告（如未使用的代码 `dead_code`、`unused_variables`）可以暂时忽略
+- 注释和文本必须使用中文和半角标点
 
 ### 开发设计
 - 多使用 trait 和泛型，减少重复代码
@@ -130,8 +131,9 @@ cargo run --bin generate_schema  # 生成 JSON Schema
 
 完成代码任务后，按以下顺序执行：
 1. `cargo +nightly fmt` - 格式化代码
-2. `cargo clippy` - 检查代码质量（可忽略 `dead_code`、`unused_variables` 等警告）
-3. `cargo test` - 运行测试（如有）
+2. `cargo clippy --fix --allow-dirty` - 自动修复可修复的问题
+3. `cargo clippy` - 检查剩余的代码质量问题（可忽略 `dead_code`、`unused_variables` 等警告）
+4. `cargo test` - 运行测试（如有）
 
 ## 版本管理
 

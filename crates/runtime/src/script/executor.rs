@@ -36,11 +36,11 @@ impl Default for ScriptExecutor {
 }
 
 impl StepExecutor for ScriptExecutor {
-    fn execute(&self, input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, input: ExtractValue, _context: &Context) -> Result<ExtractValue> {
         // TODO: 将 ExtractValue 转换为脚本可用的格式
         // TODO: 从 ScriptStep 中提取脚本内容并执行
-        // 目前简单返回输入的克隆
-        Ok(input.clone())
+        // 目前直接返回输入
+        Ok(input)
     }
 }
 

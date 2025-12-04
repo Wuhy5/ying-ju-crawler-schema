@@ -39,7 +39,7 @@
 //! |------|------|------|
 //! | `css` | HTML | CSS 选择器 |
 //! | `json` | JSON | JSONPath 表达式 |
-//! | `xpath` | XML/HTML | XPath 表达式 |
+//! | `xpath` | XML/HTML | XPath 表达式（需外部实现） |
 //! | `regex` | 文本 | 正则表达式匹配 |
 //!
 //! ## 过滤步骤（转换数据）
@@ -58,6 +58,13 @@
 //! | `var` | 上下文变量 |
 //! | `script` | 自定义脚本 |
 //! | `use_component` | 引用预定义组件 |
+//!
+//! ## 流程控制步骤
+//!
+//! | 步骤 | 说明 |
+//! |------|------|
+//! | `map` | 对数组每个元素应用步骤 |
+//! | `condition` | 条件分支执行 |
 
 use crate::{flow::ComponentRef, script::Script};
 use schemars::JsonSchema;
@@ -125,9 +132,10 @@ pub struct FieldExtractor {
 /// 提取步骤 (ExtractStep)
 ///
 /// 单个原子化操作。步骤类型：
-/// - **选择步骤**：css, json, regex
+/// - **选择步骤**：css, json, xpath, regex
 /// - **过滤步骤**：filter, attr, index
-/// - **特殊步骤**：const, var, script
+/// - **特殊步骤**：const, var, script, use_component
+/// - **流程控制**：map, condition
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractStep {
@@ -137,6 +145,20 @@ pub enum ExtractStep {
 
     /// JSONPath 表达式（JSON）
     Json(SelectorStep),
+
+    /// XPath 表达式（XML/HTML）
+    ///
+    /// **注意**：Rust 原生不支持完整 XPath，Runtime 通过 trait 抽象实现：
+    /// - 在 Tauri 环境下通过调用 JS 引擎执行
+    /// - 可注入其他 XPath 实现（如 libxml2 绑定）
+    ///
+    /// # 示例
+    ///
+    /// ```toml
+    /// title.steps = [{ xpath = "//div[@class='title']/text()" }]
+    /// links.steps = [{ xpath = { expr = "//a/@href", all = true } }]
+    /// ```
+    Xpath(SelectorStep),
 
     /// 正则表达式（文本）
     Regex(RegexStep),
@@ -175,13 +197,53 @@ pub enum ExtractStep {
     /// video_url.steps = [{ use_component = { name = "decrypt_url", args = { key = "xxx" } } }]
     /// ```
     UseComponent(ComponentRef),
+
+    // ========== 流程控制步骤 ==========
+    /// 映射处理（对数组每个元素应用步骤）
+    ///
+    /// 输入必须是数组，对每个元素执行内部步骤，返回处理后的数组
+    ///
+    /// # 示例
+    ///
+    /// ```toml
+    /// # 提取所有链接并转为绝对路径
+    /// urls.steps = [
+    ///     { css = { expr = "a", all = true } },
+    ///     { map = [{ attr = "href" }, { filter = "absolute_url" }] }
+    /// ]
+    ///
+    /// # 从 JSON 数组提取特定字段
+    /// titles.steps = [
+    ///     { json = "$.items[*]" },
+    ///     { map = [{ json = "$.title" }, { filter = "trim" }] }
+    /// ]
+    /// ```
+    Map(Vec<ExtractStep>),
+
+    /// 条件分支
+    ///
+    /// 根据条件选择不同的提取逻辑
+    ///
+    /// # 示例
+    ///
+    /// ```toml
+    /// # VIP 用户和普通用户使用不同选择器
+    /// play_url.steps = [{
+    ///     condition = {
+    ///         when = [{ css = ".vip-player" }],
+    ///         then = [{ css = ".vip-player video" }, { attr = "src" }],
+    ///         otherwise = [{ css = ".normal-player video" }, { attr = "src" }]
+    ///     }
+    /// }]
+    /// ```
+    Condition(Box<ConditionStep>),
 }
 
 // ============================================================================
 // 步骤配置类型
 // ============================================================================
 
-/// 选择器步骤（CSS/JSONPath/XPath 通用）
+/// 选择器步骤（CSS/JSONPath通用）
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SelectorStep {
@@ -190,7 +252,7 @@ pub enum SelectorStep {
     /// 带配置的选择器
     WithOptions {
         /// 选择器表达式
-        selector: String,
+        expr: String,
         /// 是否选择所有匹配（默认 false）
         #[serde(default)]
         all: bool,
@@ -238,6 +300,25 @@ pub enum IndexStep {
     Single(i32),
     /// 切片表达式 "start:end" 或 "start:end:step"
     Slice(String),
+}
+
+/// 条件步骤配置
+///
+/// 根据条件选择执行不同的提取逻辑
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ConditionStep {
+    /// 条件检测步骤
+    ///
+    /// 执行这些步骤，如果结果非空/非 null/非 false，则条件为真
+    pub when: Vec<ExtractStep>,
+
+    /// 条件为真时执行的步骤
+    pub then: Vec<ExtractStep>,
+
+    /// 条件为假时执行的步骤（可选）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub otherwise: Option<Vec<ExtractStep>>,
 }
 
 /// 过滤器配置（结构化形式）

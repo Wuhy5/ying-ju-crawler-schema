@@ -41,29 +41,39 @@ impl FilterRegistry {
     }
 
     /// 应用过滤器
-    pub fn apply(&self, name: &str, input: &ExtractValue, args: &[Value]) -> Result<ExtractValue> {
+    ///
+    /// 接受输入值的所有权，内部使用引用传递给过滤器
+    pub fn apply(&self, name: &str, input: ExtractValue, args: &[Value]) -> Result<ExtractValue> {
         let filter = self
             .get(name)
             .ok_or_else(|| RuntimeError::Extraction(format!("Filter not found: {}", name)))?;
 
-        filter.apply(input, args)
+        filter.apply(&input, args)
     }
 
     /// 注册所有内置过滤器
     fn register_builtin_filters(&mut self) {
+        use crate::extractor::filter::{convert, string, url};
+
         // 字符串过滤器
-        self.register("trim", crate::extractor::filter::string::TrimFilter);
-        self.register("lower", crate::extractor::filter::string::LowerFilter);
-        self.register("upper", crate::extractor::filter::string::UpperFilter);
+        self.register("trim", string::TrimFilter);
+        self.register("lower", string::LowerFilter);
+        self.register("upper", string::UpperFilter);
+        self.register("replace", string::ReplaceFilter);
+        self.register("regex_replace", string::RegexReplaceFilter);
+        self.register("split", string::SplitFilter);
+        self.register("join", string::JoinFilter);
+        self.register("strip_html", string::StripHtmlFilter);
+        self.register("substring", string::SubstringFilter);
 
         // 类型转换过滤器
-        self.register("to_int", crate::extractor::filter::convert::ToIntFilter);
-        self.register(
-            "to_string",
-            crate::extractor::filter::convert::ToStringFilter,
-        );
+        self.register("to_int", convert::ToIntFilter);
+        self.register("to_string", convert::ToStringFilter);
 
-        // TODO: 注册更多过滤器
+        // URL 过滤器
+        self.register("absolute_url", url::AbsoluteUrlFilter);
+        self.register("url_encode", url::UrlEncodeFilter);
+        self.register("url_decode", url::UrlDecodeFilter);
     }
 }
 

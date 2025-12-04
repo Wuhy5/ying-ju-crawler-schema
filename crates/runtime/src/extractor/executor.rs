@@ -3,12 +3,15 @@
 //! 使用策略模式实现各种提取步骤
 
 use crate::{Result, context::Context, extractor::value::ExtractValue};
-use crawler_schema::ExtractStep;
+use crawler_schema::extract::ExtractStep;
 
 /// 步骤执行器 trait（策略模式）
 pub trait StepExecutor: Send + Sync {
     /// 执行步骤
-    fn execute(&self, input: &ExtractValue, context: &Context) -> Result<ExtractValue>;
+    ///
+    /// 接受输入的所有权以避免不必要的 clone，
+    /// 当需要保留原值时，调用方应先 clone
+    fn execute(&self, input: ExtractValue, context: &Context) -> Result<ExtractValue>;
 }
 
 /// 步骤执行器工厂（工厂模式）
@@ -49,6 +52,20 @@ impl StepExecutorFactory {
             ExtractStep::UseComponent(component_ref) => Box::new(
                 crate::extractor::selector::component::ComponentExecutor::new(
                     component_ref.clone(),
+                ),
+            ),
+            ExtractStep::Xpath(selector) => {
+                // XPath 通过 trait 实现，需要外部注入
+                // 目前返回 Noop，在 Tauri 环境下通过 JS 实现
+                let _ = selector;
+                Box::new(crate::extractor::selector::noop::NoopExecutor)
+            }
+            ExtractStep::Map(steps) => Box::new(crate::extractor::selector::map::MapExecutor::new(
+                steps.clone(),
+            )),
+            ExtractStep::Condition(condition) => Box::new(
+                crate::extractor::selector::condition::ConditionExecutor::new(
+                    condition.as_ref().clone(),
                 ),
             ),
         }

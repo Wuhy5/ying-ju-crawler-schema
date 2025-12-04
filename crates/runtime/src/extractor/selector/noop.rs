@@ -10,7 +10,7 @@ use crate::{
 pub struct NoopExecutor;
 
 impl StepExecutor for NoopExecutor {
-    fn execute(&self, input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
-        Ok(input.clone())
+    fn execute(&self, input: ExtractValue, _context: &Context) -> Result<ExtractValue> {
+        Ok(input)
     }
 }

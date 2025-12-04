@@ -48,10 +48,14 @@ pub mod crawler;
 // WebView 提供者
 pub mod webview;
 
+// 人机验证/反爬处理
+pub mod challenge;
+
 // 工具函数
 pub mod util;
 
 // 重新导出常用类型
+pub use challenge::{ChallengeCredentials, ChallengeManager, CredentialsCache};
 pub use context::Context;
 pub use crawler::CrawlerRuntime;
 pub use error::RuntimeError;

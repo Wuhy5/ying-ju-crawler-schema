@@ -19,7 +19,7 @@ impl ConstExecutor {
 }
 
 impl StepExecutor for ConstExecutor {
-    fn execute(&self, _input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, _input: ExtractValue, _context: &Context) -> Result<ExtractValue> {
         Ok(ExtractValue::from_json(&self.value))
     }
 }

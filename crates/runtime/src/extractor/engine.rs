@@ -8,7 +8,7 @@ use crate::{
     error::RuntimeError,
     extractor::{ExtractValue, StepExecutorFactory},
 };
-use crawler_schema::FieldExtractor;
+use crawler_schema::extract::{ExtractStep, FieldExtractor};
 
 /// 提取引擎
 ///
@@ -29,11 +29,11 @@ impl ExtractEngine {
     pub fn extract_field(
         &self,
         extractor: &FieldExtractor,
-        input: &ExtractValue,
+        input: ExtractValue,
         context: &Context,
     ) -> Result<ExtractValue> {
         // 执行主步骤链
-        match self.execute_steps(&extractor.steps, input, context) {
+        match self.execute_steps(&extractor.steps, input.clone(), context) {
             Ok(value) => {
                 // 检查是否为空
                 if value.is_empty() && !extractor.nullable {
@@ -41,11 +41,10 @@ impl ExtractEngine {
                     if let Some(fallback) = &extractor.fallback {
                         for fallback_steps in fallback {
                             if let Ok(fallback_value) =
-                                self.execute_steps(fallback_steps, input, context)
+                                self.execute_steps(fallback_steps, input.clone(), context)
+                                && !fallback_value.is_empty()
                             {
-                                if !fallback_value.is_empty() {
-                                    return Ok(fallback_value);
-                                }
+                                return Ok(fallback_value);
                             }
                         }
                     }
@@ -68,11 +67,10 @@ impl ExtractEngine {
                 if let Some(fallback) = &extractor.fallback {
                     for fallback_steps in fallback {
                         if let Ok(fallback_value) =
-                            self.execute_steps(fallback_steps, input, context)
+                            self.execute_steps(fallback_steps, input.clone(), context)
+                            && !fallback_value.is_empty()
                         {
-                            if !fallback_value.is_empty() {
-                                return Ok(fallback_value);
-                            }
+                            return Ok(fallback_value);
                         }
                     }
                 }
@@ -90,15 +88,15 @@ impl ExtractEngine {
     /// 执行步骤链
     fn execute_steps(
         &self,
-        steps: &[crawler_schema::ExtractStep],
-        input: &ExtractValue,
+        steps: &[ExtractStep],
+        input: ExtractValue,
         context: &Context,
     ) -> Result<ExtractValue> {
-        let mut current = input.clone();
+        let mut current = input;
 
         for step in steps {
             let executor = StepExecutorFactory::create(step);
-            current = executor.execute(&current, context)?;
+            current = executor.execute(current, context)?;
         }
 
         Ok(current)

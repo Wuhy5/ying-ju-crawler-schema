@@ -5,7 +5,7 @@ use crate::{
     context::Context,
     extractor::{ExtractValue, StepExecutor, filter::registry::global_registry},
 };
-use crawler_schema::FilterStep;
+use crawler_schema::extract::FilterStep;
 use serde_json::Value;
 
 /// 过滤器执行器
@@ -46,21 +46,21 @@ impl FilterExecutor {
 }
 
 impl StepExecutor for FilterExecutor {
-    fn execute(&self, input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, input: ExtractValue, _context: &Context) -> Result<ExtractValue> {
         let registry = global_registry();
-        let mut current = input.clone();
+        let mut current = input;
 
         match &self.filter {
             FilterStep::Pipeline(pipeline) => {
                 let filters = Self::parse_pipeline(pipeline);
                 for (name, args) in filters {
-                    current = registry.apply(&name, &current, &args)?;
+                    current = registry.apply(&name, current, &args)?;
                 }
             }
             FilterStep::List(filters) => {
                 for filter_config in filters {
                     let args = filter_config.args.as_deref().unwrap_or(&[]);
-                    current = registry.apply(&filter_config.name, &current, args)?;
+                    current = registry.apply(&filter_config.name, current, args)?;
                 }
             }
         }

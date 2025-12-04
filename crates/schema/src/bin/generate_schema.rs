@@ -1,4 +1,4 @@
-use crawler_schema::CrawlerRule;
+use crawler_schema::core::CrawlerRule;
 use schemars::schema_for;
 use serde_json::Value;
 

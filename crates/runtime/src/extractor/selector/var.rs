@@ -19,10 +19,10 @@ impl VarExecutor {
 }
 
 impl StepExecutor for VarExecutor {
-    fn execute(&self, _input: &ExtractValue, context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, _input: ExtractValue, context: &Context) -> Result<ExtractValue> {
         context
             .get(&self.var_name)
-            .map(|v| ExtractValue::from_json(v))
+            .map(ExtractValue::from_json)
             .ok_or_else(|| {
                 RuntimeError::Extraction(format!("Variable not found: {}", self.var_name))
             })

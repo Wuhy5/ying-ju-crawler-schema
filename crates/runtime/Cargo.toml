@@ -20,6 +20,8 @@ thiserror.workspace = true
 
 # 数据提取与处理
 regex.workspace = true
+scraper.workspace = true
+jsonpath-rust.workspace = true
 
 # HTTP 客户端与异步支持
 reqwest.workspace = true
@@ -39,6 +41,8 @@ quick_cache.workspace = true
 base64.workspace = true
 urlencoding.workspace = true
 md5.workspace = true
+url.workspace = true
+tracing.workspace = true
 
 
 [lib]

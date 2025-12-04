@@ -3,7 +3,7 @@
 //! 封装 reqwest，提供连接池和重试机制
 
 use crate::{Result, error::RuntimeError};
-use crawler_schema::HttpConfig;
+use crawler_schema::config::HttpConfig;
 use std::time::Duration;
 
 /// HTTP 客户端
@@ -77,10 +77,12 @@ impl HttpClient {
     pub async fn get(&self, url: &str) -> Result<reqwest::Response> {
         let mut request = self.client.get(url);
 
-        // 应用全局 headers
-        if let Some(headers) = &self.config.headers {
+        // 应用全局请求头
+        if let Some(req_config) = &self.config.request
+            && let Some(headers) = &req_config.headers
+        {
             for (key, value) in headers {
-                request = request.header(key, value);
+                request = request.header(key, value.as_str());
             }
         }
 
@@ -96,10 +98,37 @@ impl HttpClient {
     pub async fn post(&self, url: &str, body: String) -> Result<reqwest::Response> {
         let mut request = self.client.post(url).body(body);
 
-        // 应用全局 headers
-        if let Some(headers) = &self.config.headers {
+        // 应用全局请求头
+        if let Some(req_config) = &self.config.request
+            && let Some(headers) = &req_config.headers
+        {
             for (key, value) in headers {
-                request = request.header(key, value);
+                request = request.header(key, value.as_str());
+            }
+        }
+
+        // 应用 User-Agent
+        if let Some(ua) = &self.config.user_agent {
+            request = request.header("User-Agent", ua);
+        }
+
+        self.execute_with_retry(request).await
+    }
+
+    /// 发起 POST 表单请求
+    pub async fn post_form(
+        &self,
+        url: &str,
+        form: &[(String, String)],
+    ) -> Result<reqwest::Response> {
+        let mut request = self.client.post(url).form(form);
+
+        // 应用全局请求头
+        if let Some(req_config) = &self.config.request
+            && let Some(headers) = &req_config.headers
+        {
+            for (key, value) in headers {
+                request = request.header(key, value.as_str());
             }
         }
 

@@ -61,7 +61,7 @@ impl RhaiScriptEngine {
     }
 
     /// 创建脚本作用域
-    fn create_scope(&self, context: &ScriptContext) -> Scope {
+    fn create_scope(&self, context: &ScriptContext) -> Scope<'_> {
         let mut scope = Scope::new();
 
         for (key, value) in &context.variables {
@@ -89,7 +89,7 @@ impl ScriptEngine for RhaiScriptEngine {
 
     fn execute_json(&self, script: &str, context: &ScriptContext) -> Result<serde_json::Value> {
         let result = self.execute(script, context)?;
-        serde_json::from_str(&result).or_else(|_| Ok(serde_json::Value::String(result)))
+        serde_json::from_str(&result).or(Ok(serde_json::Value::String(result)))
     }
 
     fn set_timeout(&mut self, duration: Duration) {

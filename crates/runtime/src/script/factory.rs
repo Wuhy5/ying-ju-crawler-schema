@@ -1,7 +1,7 @@
 //! 脚本引擎工厂
 
 use crate::script::*;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 /// 脚本语言类型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -17,17 +17,6 @@ pub enum ScriptLanguage {
 }
 
 impl ScriptLanguage {
-    /// 从字符串解析
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s.to_lowercase().as_str() {
-            "rhai" | "rs" => Some(Self::Rhai),
-            "javascript" | "js" | "ecmascript" => Some(Self::JavaScript),
-            "lua" => Some(Self::Lua),
-            "python" | "py" => Some(Self::Python),
-            _ => None,
-        }
-    }
-
     /// 转为字符串
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -35,6 +24,20 @@ impl ScriptLanguage {
             Self::JavaScript => "javascript",
             Self::Lua => "lua",
             Self::Python => "python",
+        }
+    }
+}
+
+impl FromStr for ScriptLanguage {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "rhai" | "rs" => Ok(Self::Rhai),
+            "javascript" | "js" | "ecmascript" => Ok(Self::JavaScript),
+            "lua" => Ok(Self::Lua),
+            "python" | "py" => Ok(Self::Python),
+            _ => Err(()),
         }
     }
 }
@@ -57,7 +60,7 @@ impl ScriptEngineFactory {
 
     /// 从字符串创建引擎
     pub fn create_from_str(lang: &str) -> Option<Arc<dyn ScriptEngine>> {
-        ScriptLanguage::from_str(lang).map(Self::create)
+        ScriptLanguage::from_str(lang).ok().map(Self::create)
     }
 
     /// 创建默认引擎 (Rhai)

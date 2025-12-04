@@ -1,6 +1,6 @@
 //! 详情页流程 (DetailFlow)
 
-use crate::{fields::DetailFields, template::Template};
+use crate::{config::HttpConfig, fields::DetailFields, template::Template};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -28,6 +28,12 @@ pub struct DetailFlow {
     /// 详情页 URL 模板
     /// 约定输入变量: {{ detail_url }}
     pub url: Template,
+
+    /// 流程级 HTTP 配置（可选）
+    ///
+    /// 覆盖全局 HTTP 配置
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http: Option<HttpConfig>,
 
     /// 字段提取规则
     /// 根据媒体类型定义不同的字段集合

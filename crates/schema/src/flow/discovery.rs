@@ -1,10 +1,10 @@
 //! 发现页流程 (DiscoveryFlow)
 
-use crate::{extract::FieldExtractor, fields::ItemFields, template::Template};
+use crate::{config::HttpConfig, extract::FieldExtractor, fields::ItemFields, template::Template};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::common::{FilterGroup, PaginationConfig};
+use super::common::{FilterGroup, Pagination};
 
 /// 发现页流程 (DiscoveryFlow)
 /// 用于列表页、分类页、发现页等场景
@@ -16,8 +16,8 @@ use super::common::{FilterGroup, PaginationConfig};
 /// url = "https://example.com/category/{{ category }}?page={{ page }}"
 ///
 /// [discovery.pagination]
-/// pagination_type = "page_number"
-/// start_page = 1
+/// type = "page_number"
+/// start = 1
 ///
 /// [discovery.fields.title]
 /// steps = [{ css = ".title" }, { filter = "trim" }]
@@ -36,9 +36,15 @@ pub struct DiscoveryFlow {
     /// 支持变量: {{ category }}, {{ page }}, 自定义筛选器变量
     pub url: Template,
 
+    /// 流程级 HTTP 配置（可选）
+    ///
+    /// 覆盖全局 HTTP 配置
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http: Option<HttpConfig>,
+
     /// 分页配置（可选）
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pagination: Option<PaginationConfig>,
+    pub pagination: Option<Pagination>,
 
     /// 分类列表（可选）
     /// 静态数组或动态获取配置

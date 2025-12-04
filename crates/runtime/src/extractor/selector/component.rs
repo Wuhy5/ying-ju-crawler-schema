@@ -10,7 +10,7 @@ use crate::{
     context::Context,
     extractor::{ExtractValue, StepExecutor},
 };
-use crawler_schema::ComponentRef;
+use crawler_schema::flow::ComponentRef;
 
 /// 组件引用执行器
 ///
@@ -35,7 +35,7 @@ impl ComponentExecutor {
 }
 
 impl StepExecutor for ComponentExecutor {
-    fn execute(&self, input: &ExtractValue, _context: &Context) -> Result<ExtractValue> {
+    fn execute(&self, input: ExtractValue, _context: &Context) -> Result<ExtractValue> {
         // TODO: 完整实现需要：
         // 1. 从上下文获取全局组件注册表
         // 2. 根据名称查找组件定义
@@ -44,6 +44,6 @@ impl StepExecutor for ComponentExecutor {
         //
         // 当前返回输入值作为占位
         let _ = self.component_name(); // 避免 dead_code 警告
-        Ok(input.clone())
+        Ok(input)
     }
 }

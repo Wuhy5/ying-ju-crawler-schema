@@ -16,7 +16,7 @@ use crate::{
     template::TemplateEngine,
     webview::{SharedWebViewProvider, noop_provider},
 };
-use crawler_schema::CrawlerRule;
+use crawler_schema::{config::Meta, core::CrawlerRule};
 use std::sync::Arc;
 
 /// 爬虫运行时
@@ -103,7 +103,7 @@ impl CrawlerRuntime {
     }
 
     /// 获取规则元信息
-    pub fn meta(&self) -> &crawler_schema::Meta {
+    pub fn meta(&self) -> &Meta {
         &self.rule.meta
     }
 

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 /// 脚本执行上下文
 ///
 /// 包含脚本执行时可访问的所有数据和服务
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ScriptContext {
     /// 当前输入值（提取流程的中间结果）
     pub input: String,
@@ -35,14 +35,5 @@ impl ScriptContext {
     pub fn with_variable(mut self, key: String, value: Value) -> Self {
         self.variables.insert(key, value);
         self
-    }
-}
-
-impl Default for ScriptContext {
-    fn default() -> Self {
-        Self {
-            input: String::new(),
-            variables: HashMap::new(),
-        }
     }
 }
