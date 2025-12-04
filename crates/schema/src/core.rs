@@ -4,8 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::{ChallengeConfig, HttpConfig, Meta},
-    flow::{ContentFlow, DetailFlow, DiscoveryFlow, LoginFlow, SearchFlow},
+    Component, config::{ChallengeConfig, HttpConfig, Meta}, flow::{ContentFlow, DetailFlow, DiscoveryFlow, LoginFlow, SearchFlow}
 };
 
 /// 影视软件爬虫规则 (CrawlerRule)
@@ -20,7 +19,9 @@ pub struct CrawlerRule {
     /// 人机验证/反爬挑战处理配置
     #[serde(skip_serializing_if = "Option::is_none")]
     pub challenge: Option<ChallengeConfig>,
-
+    /// 可重用组件定义
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub components: Option<Component>,
     // ===== 流程定义 =====
     /// 登录流程（可选）
     #[serde(skip_serializing_if = "Option::is_none")]
