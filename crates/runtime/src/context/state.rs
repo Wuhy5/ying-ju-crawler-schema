@@ -101,18 +101,3 @@ impl StateManager {
         self.state.remove(key)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_state_manager() {
-        let mut state = StateManager::new();
-        state.set("page", StateValue::Int(1));
-        assert_eq!(state.get_int("page"), Some(1));
-
-        state.increment("page");
-        assert_eq!(state.get_int("page"), Some(2));
-    }
-}

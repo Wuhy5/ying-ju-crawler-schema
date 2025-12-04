@@ -57,8 +57,9 @@
 //! | `const` | 常量值 |
 //! | `var` | 上下文变量 |
 //! | `script` | 自定义脚本 |
+//! | `use_component` | 引用预定义组件 |
 
-use crate::script::Script;
+use crate::{flow::ComponentRef, script::Script};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -159,6 +160,21 @@ pub enum ExtractStep {
 
     /// 脚本调用
     Script(Script),
+
+    /// 组件引用
+    ///
+    /// 引用在 `components` 中定义的可复用组件
+    ///
+    /// # 示例
+    ///
+    /// ```toml
+    /// # 简单引用
+    /// cover.steps = [{ use_component = "extract_cover" }]
+    ///
+    /// # 带参数引用
+    /// video_url.steps = [{ use_component = { name = "decrypt_url", args = { key = "xxx" } } }]
+    /// ```
+    UseComponent(ComponentRef),
 }
 
 // ============================================================================

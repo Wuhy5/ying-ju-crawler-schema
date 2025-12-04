@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-Ying-Ju 媒体爬虫规范库，包含两个核心 crate：
+Ying-Ju 媒体爬虫规范和实现库为Ying-Ju-App(tauri实现)提供支持，包含两个核心 crate：
 - **`crawler-schema`**：纯数据结构定义（JSON Schema 生成、序列化）
 - **`crawler-runtime`**：运行时逻辑（模板渲染、配置合并、验证）
 
@@ -107,6 +107,7 @@ impl TemplateExt for Template { /* ... */ }
 - 保持模块内聚，职责单一
 - 明确区分 schema 和 runtime 逻辑
 - 多使用设计模式（如策略模式、工厂模式）提升扩展性
+- 遇到不了解的库或该库的api优先使用context7获取资料和从网页的https://docs.rs/查找文档
 
 ### 性能
 - 避免不必要的内存分配和拷贝

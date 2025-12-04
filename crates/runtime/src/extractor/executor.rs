@@ -46,6 +46,11 @@ impl StepExecutorFactory {
                 // TODO: 实现脚本执行器
                 Box::new(crate::extractor::selector::noop::NoopExecutor)
             }
+            ExtractStep::UseComponent(component_ref) => Box::new(
+                crate::extractor::selector::component::ComponentExecutor::new(
+                    component_ref.clone(),
+                ),
+            ),
         }
     }
 }

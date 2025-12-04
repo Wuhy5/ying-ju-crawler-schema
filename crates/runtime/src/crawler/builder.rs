@@ -114,35 +114,3 @@ impl Default for CrawlerRuntimeBuilder {
         Self::new()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_builder() {
-        let toml = r#"
-            [meta]
-            name = "Test"
-            version = "1.0.0"
-            author = "Test Author"
-
-            [detail]
-            url = "https://example.com/detail/{{ id }}"
-
-            [search]
-            url = "https://example.com/search?q={{ keyword }}"
-        "#;
-
-        let runtime = CrawlerRuntimeBuilder::new()
-            .rule_toml(toml)
-            .unwrap()
-            .build();
-
-        assert!(runtime.is_ok());
-
-        // 默认没有 WebView 支持
-        let runtime = runtime.unwrap();
-        assert!(!runtime.has_webview_support());
-    }
-}

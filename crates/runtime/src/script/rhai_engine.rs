@@ -5,6 +5,7 @@ use crate::{
     error::RuntimeError,
     script::{ScriptContext, ScriptEngine},
 };
+use quick_cache::sync::Cache;
 use rhai::{AST, Dynamic, Engine, Scope};
 use std::{
     sync::{Arc, Mutex},
@@ -16,7 +17,7 @@ pub struct RhaiScriptEngine {
     /// Rhai 引擎实例
     engine: Arc<Mutex<Engine>>,
     /// 编译缓存
-    ast_cache: Arc<Mutex<lru::LruCache<String, Arc<AST>>>>,
+    ast_cache: Cache<String, Arc<AST>>,
     /// 执行超时设置
     timeout: Duration,
 }
@@ -36,20 +37,15 @@ impl RhaiScriptEngine {
 
         Self {
             engine: Arc::new(Mutex::new(engine)),
-            ast_cache: Arc::new(Mutex::new(lru::LruCache::new(
-                std::num::NonZeroUsize::new(100).unwrap(),
-            ))),
+            ast_cache: Cache::new(128),
             timeout: Duration::from_secs(5),
         }
     }
 
     /// 编译脚本（带缓存）
     fn compile_cached(&self, script: &str) -> Result<Arc<AST>> {
-        {
-            let cache = self.ast_cache.lock().unwrap();
-            if let Some(ast) = cache.peek(script) {
-                return Ok(Arc::clone(ast));
-            }
+        if let Some(ast) = self.ast_cache.get(script) {
+            return Ok(ast);
         }
 
         let engine = self.engine.lock().unwrap();
@@ -59,10 +55,7 @@ impl RhaiScriptEngine {
 
         let ast = Arc::new(ast);
 
-        {
-            let mut cache = self.ast_cache.lock().unwrap();
-            cache.put(script.to_string(), Arc::clone(&ast));
-        }
+        self.ast_cache.insert(script.to_string(), Arc::clone(&ast));
 
         Ok(ast)
     }

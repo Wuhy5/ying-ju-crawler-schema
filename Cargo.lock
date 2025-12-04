@@ -460,9 +460,9 @@ dependencies = [
  "base64",
  "boa_engine",
  "crawler-schema",
- "lru",
  "md5",
  "mlua",
+ "quick_cache",
  "regex",
  "reqwest",
  "rhai",
@@ -1538,15 +1538,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lru"
-version = "0.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96051b46fc183dc9cd4a223960ef37b9af631b55191852a8274bfef064cda20f"
-dependencies = [
- "hashbrown 0.16.1",
-]
-
-[[package]]
 name = "lua-src"
 version = "548.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2200,6 +2191,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ee95bc4ef87b8d5ba32e8b7714ccc834865276eab0aed5c9958d00ec45f49e8"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "quick_cache"
+version = "0.6.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ada44a88ef953a3294f6eb55d2007ba44646015e18613d2f213016379203ef3"
+dependencies = [
+ "ahash",
+ "equivalent",
+ "hashbrown 0.16.1",
+ "parking_lot",
 ]
 
 [[package]]

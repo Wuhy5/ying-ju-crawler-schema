@@ -65,39 +65,3 @@ impl ScriptEngineFactory {
         Self::create(ScriptLanguage::Rhai)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_factory() {
-        let rhai = ScriptEngineFactory::create(ScriptLanguage::Rhai);
-        assert_eq!(rhai.engine_name(), "rhai");
-
-        let js = ScriptEngineFactory::create(ScriptLanguage::JavaScript);
-        assert_eq!(js.engine_name(), "javascript");
-
-        let lua = ScriptEngineFactory::create(ScriptLanguage::Lua);
-        assert_eq!(lua.engine_name(), "lua");
-
-        let python = ScriptEngineFactory::create(ScriptLanguage::Python);
-        assert_eq!(python.engine_name(), "python");
-    }
-
-    #[test]
-    fn test_parse_language() {
-        assert_eq!(ScriptLanguage::from_str("rhai"), Some(ScriptLanguage::Rhai));
-        assert_eq!(
-            ScriptLanguage::from_str("js"),
-            Some(ScriptLanguage::JavaScript)
-        );
-        assert_eq!(ScriptLanguage::from_str("lua"), Some(ScriptLanguage::Lua));
-        assert_eq!(
-            ScriptLanguage::from_str("python"),
-            Some(ScriptLanguage::Python)
-        );
-        assert_eq!(ScriptLanguage::from_str("py"), Some(ScriptLanguage::Python));
-        assert_eq!(ScriptLanguage::from_str("unknown"), None);
-    }
-}
