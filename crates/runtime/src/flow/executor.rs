@@ -2,7 +2,10 @@
 //!
 //! 定义所有流程执行器的通用接口
 
-use crate::{Result, context::Context};
+use crate::{
+    Result,
+    context::{FlowContext, RuntimeContext},
+};
 use async_trait::async_trait;
 
 /// 流程执行器 trait
@@ -16,5 +19,11 @@ pub trait FlowExecutor: Send + Sync {
     type Output: Send;
 
     /// 执行流程
-    async fn execute(&self, input: Self::Input, context: &mut Context) -> Result<Self::Output>;
+    ///
+    /// Context 使用 DashMap 实现，内部可变，外部不可变引用
+    async fn execute(
+        input: Self::Input,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
+    ) -> Result<Self::Output>;
 }

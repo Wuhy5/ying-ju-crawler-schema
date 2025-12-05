@@ -6,7 +6,7 @@ use std::time::Duration;
 /// 脚本引擎统一接口
 ///
 /// 所有脚本引擎(Rhai/JS/Python/Lua)都实现此 trait
-pub trait ScriptEngine: Send + Sync {
+pub trait ScriptEngine: Send + Sync + std::fmt::Debug {
     /// 执行脚本并返回字符串结果
     fn execute(&self, script: &str, context: &ScriptContext) -> Result<String>;
 

@@ -4,7 +4,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     extractor::value::{ExtractValueData, SharedValue},
 };
 use crawler_schema::extract::ExtractStep;
@@ -19,49 +19,71 @@ impl StepExecutorFactory {
     pub fn execute(
         step: &ExtractStep,
         input: &ExtractValueData,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         match step {
             ExtractStep::Css(selector) => {
                 crate::extractor::selector::css::CssSelectorExecutor::execute(
-                    selector, input, context,
+                    selector,
+                    input,
+                    runtime_context,
+                    flow_context,
                 )
             }
             ExtractStep::Json(selector) => {
                 crate::extractor::selector::json::JsonSelectorExecutor::execute(
-                    selector, input, context,
+                    selector,
+                    input,
+                    runtime_context,
+                    flow_context,
                 )
             }
             ExtractStep::Regex(regex) => {
                 crate::extractor::selector::regex::RegexSelectorExecutor::execute(
-                    regex, input, context,
+                    regex,
+                    input,
+                    runtime_context,
+                    flow_context,
                 )
             }
             ExtractStep::Filter(filter) => {
-                crate::extractor::filter::executor::FilterExecutor::execute(filter, input, context)
-            }
-            ExtractStep::Attr(attr) => {
-                crate::extractor::selector::attr::AttrExecutor::execute(attr, input, context)
-            }
-            ExtractStep::Index(index) => {
-                crate::extractor::selector::index::IndexExecutor::execute(index, input, context)
-            }
-            ExtractStep::Const(value) => {
-                crate::extractor::selector::const_value::ConstExecutor::execute(
-                    value, input, context,
+                crate::extractor::filter::executor::FilterExecutor::execute(
+                    filter,
+                    input,
+                    runtime_context,
+                    flow_context,
                 )
             }
-            ExtractStep::Var(var) => {
-                crate::extractor::selector::var::VarExecutor::execute(var, input, context)
+            ExtractStep::Attr(attr) => crate::extractor::selector::attr::AttrExecutor::execute(
+                attr,
+                input,
+                runtime_context,
+                flow_context,
+            ),
+            ExtractStep::Index(index) => crate::extractor::selector::index::IndexExecutor::execute(
+                index,
+                input,
+                runtime_context,
+                flow_context,
+            ),
+            ExtractStep::SetVar(set_var) => {
+                crate::extractor::selector::set_var::SetVarExecutor::execute(
+                    set_var,
+                    input,
+                    runtime_context,
+                    flow_context,
+                )
             }
             ExtractStep::Script(script) => {
-                crate::script::ScriptExecutor::execute(script, input, context)
+                crate::script::ScriptExecutor::execute(script, input, runtime_context, flow_context)
             }
             ExtractStep::UseComponent(component_ref) => {
                 crate::extractor::selector::component::ComponentExecutor::execute(
                     component_ref,
                     input,
-                    context,
+                    runtime_context,
+                    flow_context,
                 )
             }
             ExtractStep::Xpath(_selector) => {
@@ -70,12 +92,18 @@ impl StepExecutorFactory {
                     "XPath not supported in this context".into(),
                 ))
             }
-            ExtractStep::Map(steps) => {
-                crate::extractor::selector::map::MapExecutor::execute(steps, input, context)
-            }
+            ExtractStep::Map(steps) => crate::extractor::selector::map::MapExecutor::execute(
+                steps,
+                input,
+                runtime_context,
+                flow_context,
+            ),
             ExtractStep::Condition(condition) => {
                 crate::extractor::selector::condition::ConditionExecutor::execute(
-                    condition, input, context,
+                    condition,
+                    input,
+                    runtime_context,
+                    flow_context,
                 )
             }
         }

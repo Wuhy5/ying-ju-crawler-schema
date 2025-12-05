@@ -5,7 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// 内容页流程 (ContentFlow)
-/// 用于播放页、阅读页等内容消费页面
+///
+/// 用于播放页、阅读页等内容消费页面。
 ///
 /// 例如：
 /// - 视频：解析真实播放地址
@@ -13,11 +14,26 @@ use serde::{Deserialize, Serialize};
 /// - 漫画：获取章节图片列表
 /// - 音频：获取音频播放地址
 ///
+/// # 可用变量
+///
+/// ## Flow 变量（自动注入）
+///
+/// | 变量 | 类型 | 说明 |
+/// |------|------|------|
+/// | `url` | String | 内容页 URL（章节URL/播放URL） |
+///
+/// ## Runtime 全局变量（通过 `$` 前缀访问）
+///
+/// | 变量 | 说明 |
+/// |------|------|
+/// | `$.base_url` | 目标网站基础 URL |
+/// | `$.domain` | 目标网站域名 |
+///
 /// # 示例
 ///
 /// ```toml
 /// [content]
-/// url = "{{ play_url }}"
+/// url = "{{ url }}"
 ///
 /// [content.fields]
 /// media_type = "video"
@@ -31,7 +47,8 @@ pub struct ContentFlow {
     pub description: Option<String>,
 
     /// 内容页 URL 模板
-    /// 约定输入变量: {{ play_url }} 或 {{ chapter_url }}
+    ///
+    /// 可用变量：`url`（内容页URL）、`$.base_url`（全局基础URL）
     pub url: Template,
 
     /// 流程级 HTTP 配置（可选）

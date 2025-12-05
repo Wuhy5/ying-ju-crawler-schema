@@ -4,7 +4,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::{
         StepExecutorFactory,
@@ -22,13 +22,16 @@ impl MapExecutor {
     pub fn execute(
         steps: &[ExtractStep],
         input: &ExtractValueData,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         match input {
             ExtractValueData::Array(arr) => {
                 let results: Vec<SharedValue> = arr
                     .iter()
-                    .filter_map(|item| Self::execute_steps(steps, item, context).ok())
+                    .filter_map(|item| {
+                        Self::execute_steps(steps, item, runtime_context, flow_context).ok()
+                    })
                     .collect();
 
                 Ok(Arc::new(ExtractValueData::Array(Arc::new(results))))
@@ -46,12 +49,13 @@ impl MapExecutor {
     fn execute_steps(
         steps: &[ExtractStep],
         input: &ExtractValueData,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         let mut current = Arc::new(input.clone());
 
         for step in steps {
-            current = StepExecutorFactory::execute(step, &current, context)?;
+            current = StepExecutorFactory::execute(step, &current, runtime_context, flow_context)?;
         }
 
         Ok(current)

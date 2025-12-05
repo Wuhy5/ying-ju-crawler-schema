@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     extractor::{SharedValue, value::ExtractValueData},
 };
 use std::sync::Arc;
@@ -12,7 +12,11 @@ pub struct NoopExecutor;
 
 impl NoopExecutor {
     /// 执行空操作，直接返回输入
-    pub fn execute(input: &ExtractValueData, _context: &Context) -> Result<SharedValue> {
+    pub fn execute(
+        input: &ExtractValueData,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
+    ) -> Result<SharedValue> {
         Ok(Arc::new(input.clone()))
     }
 }

@@ -33,6 +33,7 @@ sha2 = "0.10"
 chrono = { version = "0.4", features = ["serde"] }
 quick_cache = "0.6.18"
 zhconv = { version = "0.4", features = ["opencc"] }
+dashmap = "6.1.0"
 
 # workspace internal
 crawler-schema = { path = "crates/schema" }

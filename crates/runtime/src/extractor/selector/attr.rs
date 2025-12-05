@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::value::{ExtractValueData, SharedValue},
 };
@@ -24,7 +24,8 @@ impl AttrExecutor {
     pub fn execute(
         attr_name: &str,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         match input {
             ExtractValueData::Html(html) | ExtractValueData::String(html) => {

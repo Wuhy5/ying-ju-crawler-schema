@@ -7,14 +7,32 @@ use serde::{Deserialize, Serialize};
 use super::common::Pagination;
 
 /// 搜索流程 (SearchFlow)
-/// 实现搜索功能
+///
+/// 实现搜索功能，支持关键词搜索和分页。
+///
+/// # 可用变量
+///
+/// ## Flow 变量（自动注入）
+///
+/// | 变量 | 类型 | 说明 |
+/// |------|------|------|
+/// | `keyword` | String | 搜索关键词 |
+/// | `page` | u32 | 当前页码 |
+///
+/// ## Runtime 全局变量（通过 `$` 前缀访问）
+///
+/// | 变量 | 说明 |
+/// |------|------|
+/// | `$.base_url` | 目标网站基础 URL |
+/// | `$.domain` | 目标网站域名 |
 ///
 /// # 示例
 ///
 /// ## 基本 GET 搜索
+///
 /// ```toml
 /// [search]
-/// url = "https://example.com/search?q={{ keyword }}&page={{ page }}"
+/// url = "{{ $.base_url }}/search?q={{ keyword }}&page={{ page }}"
 ///
 /// [search.pagination]
 /// type = "page_number"
@@ -25,9 +43,10 @@ use super::common::Pagination;
 /// ```
 ///
 /// ## POST 搜索（使用流程级 HTTP 配置）
+///
 /// ```toml
 /// [search]
-/// url = "https://api.example.com/search"
+/// url = "{{ $.base_url }}/api/search"
 ///
 /// [search.http.request]
 /// method = "POST"
@@ -45,7 +64,8 @@ pub struct SearchFlow {
     pub description: Option<String>,
 
     /// 搜索 URL 模板
-    /// 约定输入变量: {{ keyword }}, {{ page }}
+    ///
+    /// 可用变量：`keyword`（搜索词）、`page`（页码）、`$.base_url`（全局基础URL）
     pub url: Template,
 
     /// 流程级 HTTP 配置（可选）

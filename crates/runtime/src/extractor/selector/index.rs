@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::value::{ExtractValueData, SharedValue},
 };
@@ -17,7 +17,8 @@ impl IndexExecutor {
     pub fn execute(
         index: &IndexStep,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         match input {
             ExtractValueData::Array(arr) => match index {

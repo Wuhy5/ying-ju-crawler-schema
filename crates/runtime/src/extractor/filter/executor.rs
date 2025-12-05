@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     extractor::{SharedValue, filter::registry::global_registry, value::ExtractValueData},
 };
 use crawler_schema::extract::FilterStep;
@@ -43,7 +43,8 @@ impl FilterExecutor {
     pub fn execute(
         filter: &FilterStep,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         let registry = global_registry();
         let mut current = Arc::new(input.clone());

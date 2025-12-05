@@ -4,37 +4,24 @@
 
 use crate::{
     Result,
-    context::Context,
-    error::RuntimeError,
-    extractor::ExtractEngine,
+    context::{FlowContext, RuntimeContext},
     flow::{
-        FlowExecutor,
         detail::{DetailFlowExecutor, DetailRequest, DetailResponse},
         search::{SearchFlowExecutor, SearchRequest, SearchResponse},
     },
-    http::HttpClient,
-    template::TemplateEngine,
     webview::{SharedWebViewProvider, noop_provider},
 };
-use crawler_schema::{config::Meta, core::CrawlerRule};
+use crawler_schema::core::CrawlerRule;
 use std::sync::Arc;
 
 /// 爬虫运行时
 ///
 /// 整合所有组件，提供统一的爬虫接口
+/// Clone 是廉价的，内部使用 Arc 共享资源
+#[derive(Clone)]
 pub struct CrawlerRuntime {
-    /// 爬虫规则
-    rule: Arc<CrawlerRule>,
-    /// HTTP 客户端
-    http_client: Arc<HttpClient>,
-    /// 模板引擎
-    template_engine: Arc<TemplateEngine>,
-    /// 提取引擎
-    extract_engine: Arc<ExtractEngine>,
-    /// WebView 提供者
-    webview_provider: SharedWebViewProvider,
-    /// 全局上下文
-    context: Context,
+    /// 运行时上下文（共享资源）
+    runtime_context: Arc<RuntimeContext>,
 }
 
 impl CrawlerRuntime {
@@ -42,119 +29,45 @@ impl CrawlerRuntime {
     ///
     /// 如果规则包含需要 WebView 的配置（如登录、人机验证），
     /// 相关功能将不可用。推荐使用 `builder()` 方法注入 WebView 提供者。
-    pub fn new(rule: CrawlerRule) -> Result<Self> {
-        Self::with_webview_provider(rule, noop_provider())
-    }
-
-    /// 创建带 WebView 支持的运行时实例
-    pub fn with_webview_provider(
-        rule: CrawlerRule,
-        webview_provider: SharedWebViewProvider,
-    ) -> Result<Self> {
-        // 创建 HTTP 客户端
-        let http_config = rule.http.clone().unwrap_or_default();
-        let http_client = Arc::new(HttpClient::new(http_config)?);
-
-        // 创建模板引擎
-        let template_engine = Arc::new(TemplateEngine::new()?);
-
-        // 创建提取引擎
-        let extract_engine = Arc::new(ExtractEngine::new());
-
-        // 创建全局上下文
-        let context = Context::new();
-
-        Ok(Self {
-            rule: Arc::new(rule),
-            http_client,
-            template_engine,
-            extract_engine,
+    pub fn new(rule: CrawlerRule, webview_provider: Option<SharedWebViewProvider>) -> Result<Self> {
+        let webview_provider = webview_provider.unwrap_or_else(noop_provider);
+        // 创建运行时上下文
+        let runtime_context = Arc::new(RuntimeContext::with_webview_provider(
+            rule,
             webview_provider,
-            context,
-        })
-    }
+        )?);
 
-    /// 获取构建器
-    pub fn builder() -> crate::crawler::CrawlerRuntimeBuilder {
-        crate::crawler::CrawlerRuntimeBuilder::new()
+        Ok(Self { runtime_context })
     }
 
     /// 搜索
     pub async fn search(&self, keyword: &str, page: u32) -> Result<SearchResponse> {
-        let executor = SearchFlowExecutor::new(self.rule.search.clone())
-            .with_http_client(self.http_client.clone())
-            .with_extract_engine(self.extract_engine.clone())
-            .with_base_url(self.rule.meta.domain.clone());
-
         let request = SearchRequest {
             keyword: keyword.to_string(),
             page,
         };
-
-        let mut context = self.context.clone();
-        executor.execute(request, &mut context).await
+        let flow = &self.runtime_context.rule().search;
+        let mut flow_context = FlowContext::new(self.runtime_context.clone());
+        SearchFlowExecutor::execute(request, flow, &self.runtime_context, &mut flow_context).await
     }
 
     /// 获取详情
     pub async fn detail(&self, url: &str) -> Result<DetailResponse> {
-        let executor = DetailFlowExecutor::new(self.rule.detail.clone())
-            .with_http_client(self.http_client.clone())
-            .with_extract_engine(self.extract_engine.clone())
-            .with_base_url(self.rule.meta.domain.clone());
-
         let request = DetailRequest {
             url: url.to_string(),
         };
-
-        let mut context = self.context.clone();
-        executor.execute(request, &mut context).await
+        let flow = &self.runtime_context.rule().detail;
+        let mut flow_context = FlowContext::new(self.runtime_context.clone());
+        DetailFlowExecutor::execute(request, flow, &self.runtime_context, &mut flow_context).await
     }
 
-    /// 获取规则元信息
-    pub fn meta(&self) -> &Meta {
-        &self.rule.meta
+    /// 获取运行时上下文
+    pub fn runtime_ctx(&self) -> &Arc<RuntimeContext> {
+        &self.runtime_context
     }
 
-    /// 获取 HTTP 客户端
-    pub fn http_client(&self) -> &HttpClient {
-        &self.http_client
-    }
-
-    /// 获取模板引擎
-    pub fn template_engine(&self) -> &TemplateEngine {
-        &self.template_engine
-    }
-
-    /// 获取提取引擎
-    pub fn extract_engine(&self) -> &ExtractEngine {
-        &self.extract_engine
-    }
-
-    /// 获取 WebView 提供者
-    pub fn webview_provider(&self) -> &SharedWebViewProvider {
-        &self.webview_provider
-    }
-
-    /// 获取全局上下文
-    pub fn context(&self) -> &Context {
-        &self.context
-    }
-
-    /// 获取全局上下文的可变引用
-    pub fn context_mut(&mut self) -> &mut Context {
-        &mut self.context
-    }
-
-    /// 检查是否支持 WebView 功能
-    pub fn has_webview_support(&self) -> bool {
-        self.webview_provider.name() != "NoopWebViewProvider"
-    }
-}
-
-impl TryFrom<CrawlerRule> for CrawlerRuntime {
-    type Error = RuntimeError;
-
-    fn try_from(rule: CrawlerRule) -> Result<Self> {
-        Self::new(rule)
+    /// 关闭运行时，释放资源
+    pub fn shutdown(&self) {
+        todo!("实现资源释放逻辑");
     }
 }

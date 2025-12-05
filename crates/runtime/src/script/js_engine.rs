@@ -8,6 +8,7 @@ use crate::{Result, error::RuntimeError};
 use boa_engine::{Context, Source, js_string, object::builtins::JsArray};
 use std::time::Duration;
 
+#[derive(Debug)]
 pub struct JsScriptEngine {
     /// 执行超时设置
     timeout: Duration,

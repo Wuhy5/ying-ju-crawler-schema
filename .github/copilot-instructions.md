@@ -49,6 +49,7 @@ runtime/
 │   └── response.rs  # 响应结果
 ├── flow/            # 流程执行器
 ├── crawler/         # Runtime 主入口
+├── model/           # 详情数据模型（VideoDetail, BookDetail 等）
 └── context/         # 执行上下文
 ```
 
@@ -105,6 +106,8 @@ impl TemplateExt for Template { /* ... */ }
 - 使用 Clippy 检查代码质量（`cargo clippy`）
 - 部分警告（如未使用的代码 `dead_code`、`unused_variables`）可以暂时忽略
 - 注释和文本必须使用中文和半角标点
+- 只使用命令添加依赖保证依赖是最新版本, 其次我们需要使用workspace管理依赖版本
+- 不能有大量的clone操作, 优先使用引用传递等优化
 
 ### 开发设计
 - 多使用 trait 和泛型，减少重复代码

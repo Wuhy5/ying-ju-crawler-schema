@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::value::{ExtractValueData, SharedValue},
 };
@@ -17,7 +17,8 @@ impl RegexSelectorExecutor {
     pub fn execute(
         regex: &RegexStep,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         // 获取字符串
         let text = input

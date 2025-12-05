@@ -1,7 +1,9 @@
 //! # 发现流程执行器
 
-use crate::{Result, context::Context, flow::FlowExecutor};
-use async_trait::async_trait;
+use crate::{
+    Result,
+    context::{FlowContext, RuntimeContext},
+};
 use crawler_schema::flow::DiscoveryFlow;
 
 /// 发现请求
@@ -23,30 +25,24 @@ pub struct DiscoveryResponse {
 }
 
 /// 发现流程执行器
-pub struct DiscoveryFlowExecutor {
-    flow: DiscoveryFlow,
-}
+pub struct DiscoveryFlowExecutor;
 
 impl DiscoveryFlowExecutor {
-    pub fn new(flow: DiscoveryFlow) -> Self {
-        Self { flow }
-    }
-}
-
-#[async_trait]
-impl FlowExecutor for DiscoveryFlowExecutor {
-    type Input = DiscoveryRequest;
-    type Output = DiscoveryResponse;
-
-    async fn execute(&self, input: Self::Input, context: &mut Context) -> Result<Self::Output> {
+    /// 执行发现流程
+    pub async fn execute(
+        input: DiscoveryRequest,
+        flow: &DiscoveryFlow,
+        _runtime_context: &RuntimeContext,
+        flow_context: &mut FlowContext,
+    ) -> Result<DiscoveryResponse> {
         // 设置上下文变量
         for (key, value) in &input.filters {
-            context.set(key, serde_json::json!(value));
+            flow_context.set(key, serde_json::json!(value));
         }
-        context.set("page", serde_json::json!(input.page));
+        flow_context.set("page", serde_json::json!(input.page));
 
         // TODO: 实现发现流程
-        let _ = &self.flow;
+        let _ = flow;
 
         Ok(DiscoveryResponse {
             items: vec![],

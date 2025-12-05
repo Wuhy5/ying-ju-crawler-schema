@@ -9,7 +9,7 @@ use std::time::Duration;
 /// HTTP 客户端
 ///
 /// 封装 reqwest::Client，提供连接池复用
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct HttpClient {
     client: reqwest::Client,
     config: HttpConfig,

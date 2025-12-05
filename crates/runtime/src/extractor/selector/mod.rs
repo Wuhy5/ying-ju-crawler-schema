@@ -12,7 +12,7 @@ pub mod json;
 pub mod map;
 pub mod noop;
 pub mod regex;
-pub mod var;
+pub mod set_var;
 
 pub use component::ComponentExecutor;
 pub use condition::ConditionExecutor;

@@ -4,7 +4,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::{SharedValue, value::ExtractValueData},
     script::{ScriptContext, ScriptEngine, ScriptEngineFactory, ScriptLanguage},
@@ -20,7 +20,8 @@ impl ScriptExecutor {
     pub fn execute(
         script: &Script,
         input: &ExtractValueData,
-        context: &Context,
+        _runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         // 1. 加载脚本代码
         let code = Self::load_script_code(script)?;
@@ -42,7 +43,7 @@ impl ScriptExecutor {
         }
 
         // 添加上下文变量
-        for (key, value) in context.variables() {
+        for (key, value) in flow_context.data() {
             variables.insert(key.clone(), value.clone());
         }
 

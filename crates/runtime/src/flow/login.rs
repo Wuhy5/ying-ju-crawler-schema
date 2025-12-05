@@ -1,7 +1,9 @@
 //! # 登录流程执行器
 
-use crate::{Result, context::Context, flow::FlowExecutor};
-use async_trait::async_trait;
+use crate::{
+    Result,
+    context::{FlowContext, RuntimeContext},
+};
 use crawler_schema::flow::LoginFlow;
 
 /// 登录请求
@@ -23,28 +25,22 @@ pub struct LoginResponse {
 }
 
 /// 登录流程执行器
-pub struct LoginFlowExecutor {
-    flow: LoginFlow,
-}
+pub struct LoginFlowExecutor;
 
 impl LoginFlowExecutor {
-    pub fn new(flow: LoginFlow) -> Self {
-        Self { flow }
-    }
-}
-
-#[async_trait]
-impl FlowExecutor for LoginFlowExecutor {
-    type Input = LoginRequest;
-    type Output = LoginResponse;
-
-    async fn execute(&self, input: Self::Input, context: &mut Context) -> Result<Self::Output> {
+    /// 执行登录流程
+    pub async fn execute(
+        input: LoginRequest,
+        flow: &LoginFlow,
+        _runtime_context: &RuntimeContext,
+        flow_context: &mut FlowContext,
+    ) -> Result<LoginResponse> {
         // 设置上下文变量
-        context.set("username", serde_json::json!(input.username));
-        context.set("password", serde_json::json!(input.password));
+        flow_context.set("username", serde_json::json!(input.username));
+        flow_context.set("password", serde_json::json!(input.password));
 
         // TODO: 实现登录流程
-        let _ = &self.flow;
+        let _ = flow;
 
         Ok(LoginResponse {
             success: false,

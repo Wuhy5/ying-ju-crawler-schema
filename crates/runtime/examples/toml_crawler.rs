@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ==========================================
     // 第二步：创建运行时
     // ==========================================
-    let runtime = CrawlerRuntime::new(rule)?;
+    let runtime = CrawlerRuntime::new(rule, None)?;
     println!("✓ 运行时就绪\n");
 
     // ==========================================
@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let detail_url = if first.url.starts_with("http://") || first.url.starts_with("https://") {
             first.url.clone()
         } else if first.url.starts_with('/') {
-            format!("https://{}{}", runtime.meta().domain, first.url)
+            format!("https://{}{}", runtime.runtime_ctx().rule().meta.domain, first.url)
         } else {
             // URL 可能已经包含域名（如 www.1qxs.com/...）
             format!("https://{}", first.url)

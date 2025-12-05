@@ -4,7 +4,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     extractor::{
         StepExecutorFactory,
         value::{ExtractValueData, SharedValue},
@@ -21,14 +21,15 @@ impl ConditionExecutor {
     pub fn execute(
         condition: &ConditionStep,
         input: &ExtractValueData,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<SharedValue> {
-        if Self::evaluate_condition(&condition.when, input, context) {
+        if Self::evaluate_condition(&condition.when, input, runtime_context, flow_context) {
             // 条件为真，执行 then 步骤
-            Self::execute_steps(&condition.then, input, context)
+            Self::execute_steps(&condition.then, input, runtime_context, flow_context)
         } else if let Some(otherwise) = &condition.otherwise {
             // 条件为假，执行 otherwise 步骤
-            Self::execute_steps(otherwise, input, context)
+            Self::execute_steps(otherwise, input, runtime_context, flow_context)
         } else {
             // 没有 otherwise，返回原输入
             Ok(Arc::new(input.clone()))
@@ -39,12 +40,13 @@ impl ConditionExecutor {
     fn execute_steps(
         steps: &[ExtractStep],
         input: &ExtractValueData,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         let mut current = Arc::new(input.clone());
 
         for step in steps {
-            current = StepExecutorFactory::execute(step, &current, context)?;
+            current = StepExecutorFactory::execute(step, &current, runtime_context, flow_context)?;
         }
 
         Ok(current)
@@ -56,9 +58,10 @@ impl ConditionExecutor {
     fn evaluate_condition(
         steps: &[ExtractStep],
         input: &ExtractValueData,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> bool {
-        match Self::execute_steps(steps, input, context) {
+        match Self::execute_steps(steps, input, runtime_context, flow_context) {
             Ok(result) => result.is_truthy(),
             Err(_) => false,
         }

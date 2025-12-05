@@ -54,8 +54,7 @@
 //!
 //! | 步骤 | 说明 |
 //! |------|------|
-//! | `const` | 常量值 |
-//! | `var` | 上下文变量 |
+//! | `set_var` | 保存当前值到指定上下文 |
 //! | `script` | 自定义脚本 |
 //! | `use_component` | 引用预定义组件 |
 //!
@@ -174,11 +173,8 @@ pub enum ExtractStep {
     Index(IndexStep),
 
     // ========== 特殊步骤 ==========
-    /// 常量值
-    Const(serde_json::Value),
-
-    /// 上下文变量
-    Var(String),
+    /// 保存当前值到指定上下文
+    SetVar(SetVarStep),
 
     /// 脚本调用
     Script(Script),
@@ -237,6 +233,30 @@ pub enum ExtractStep {
     /// }]
     /// ```
     Condition(Box<ConditionStep>),
+}
+
+/// 变量上下文类型
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum VarContext {
+    /// 流程级变量
+    #[default]
+    Flow,
+    /// 实例级全局变量
+    Runtime,
+}
+
+/// 保存当前值到指定上下文
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SetVarStep {
+    /// 变量名
+    pub name: String,
+    /// 上下文类型
+    /// - `flow` - 流程级变量
+    /// - `runtime` - 实例级全局变量
+    #[serde(default)]
+    pub context: VarContext,
 }
 
 // ============================================================================

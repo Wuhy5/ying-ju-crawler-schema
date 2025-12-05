@@ -48,7 +48,7 @@ use std::sync::Arc;
 /// }
 /// ```
 #[async_trait]
-pub trait WebViewProvider: Send + Sync {
+pub trait WebViewProvider: Send + Sync + std::fmt::Debug {
     /// 打开 WebView 窗口
     ///
     /// 阻塞直到用户完成操作或超时
@@ -70,6 +70,7 @@ pub trait WebViewProvider: Send + Sync {
 /// 空实现（用于不需要 WebView 的场景）
 ///
 /// 当规则不包含 WebView 相关配置时可以使用
+#[derive(Debug)]
 pub struct NoopWebViewProvider;
 
 #[async_trait]

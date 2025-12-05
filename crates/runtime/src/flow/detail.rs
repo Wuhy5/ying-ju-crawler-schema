@@ -2,17 +2,14 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::{ExtractEngine, SharedValue, value::ExtractValueData},
-    flow::FlowExecutor,
-    http::HttpClient,
     model::{BookDetail, ChapterItem},
-    template::TemplateRenderer,
+    template::TemplateExt,
 };
-use async_trait::async_trait;
 use crawler_schema::{
-    fields::{BookDetailFields, DetailFields},
+    fields::{BookDetailFields, ChapterListRule, DetailFields},
     flow::DetailFlow,
 };
 use std::sync::Arc;
@@ -60,46 +57,17 @@ impl DetailResponse {
 }
 
 /// 详情流程执行器
-pub struct DetailFlowExecutor {
-    flow: DetailFlow,
-    http_client: Arc<HttpClient>,
-    extract_engine: Arc<ExtractEngine>,
-    base_url: String,
-}
+pub struct DetailFlowExecutor;
 
 impl DetailFlowExecutor {
-    pub fn new(flow: DetailFlow) -> Self {
-        Self {
-            flow,
-            http_client: Arc::new(HttpClient::default()),
-            extract_engine: Arc::new(ExtractEngine::new()),
-            base_url: String::new(),
-        }
-    }
-
-    pub fn with_http_client(mut self, client: Arc<HttpClient>) -> Self {
-        self.http_client = client;
-        self
-    }
-
-    pub fn with_extract_engine(mut self, engine: Arc<ExtractEngine>) -> Self {
-        self.extract_engine = engine;
-        self
-    }
-
-    pub fn with_base_url(mut self, base_url: String) -> Self {
-        self.base_url = base_url;
-        self
-    }
-
     /// 提取字符串字段
     fn extract_string(
-        _engine: &ExtractEngine,
         extractor: &crawler_schema::extract::FieldExtractor,
         input: &SharedValue,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Option<String> {
-        ExtractEngine::extract_field(extractor, input.as_ref(), context)
+        ExtractEngine::extract_field(extractor, input.as_ref(), runtime_context, flow_context)
             .ok()
             .and_then(|v| v.as_str().map(|s| s.to_string()))
             .map(|s| s.trim().to_string())
@@ -108,21 +76,21 @@ impl DetailFlowExecutor {
 
     /// 提取书籍详情
     fn extract_book_detail(
-        &self,
         fields: &BookDetailFields,
         html: &SharedValue,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<BookDetail> {
         // 提取必需字段
         let title =
-            Self::extract_string(&self.extract_engine, &fields.title.extractor, html, context)
+            Self::extract_string(&fields.title.extractor, html, runtime_context, flow_context)
                 .ok_or_else(|| RuntimeError::Extraction("无法提取标题".to_string()))?;
 
         let author = Self::extract_string(
-            &self.extract_engine,
             &fields.author.extractor,
             html,
-            context,
+            runtime_context,
+            flow_context,
         )
         .ok_or_else(|| RuntimeError::Extraction("无法提取作者".to_string()))?;
 
@@ -130,36 +98,36 @@ impl DetailFlowExecutor {
         let cover = fields
             .cover
             .as_ref()
-            .and_then(|f| Self::extract_string(&self.extract_engine, &f.extractor, html, context));
+            .and_then(|f| Self::extract_string(&f.extractor, html, runtime_context, flow_context));
 
         let intro = fields
             .intro
             .as_ref()
-            .and_then(|f| Self::extract_string(&self.extract_engine, &f.extractor, html, context));
+            .and_then(|f| Self::extract_string(&f.extractor, html, runtime_context, flow_context));
 
         let category = fields
             .category
             .as_ref()
-            .and_then(|f| Self::extract_string(&self.extract_engine, &f.extractor, html, context));
+            .and_then(|f| Self::extract_string(&f.extractor, html, runtime_context, flow_context));
 
         let status = fields
             .status
             .as_ref()
-            .and_then(|f| Self::extract_string(&self.extract_engine, &f.extractor, html, context));
+            .and_then(|f| Self::extract_string(&f.extractor, html, runtime_context, flow_context));
 
         let last_chapter = fields
             .last_chapter
             .as_ref()
-            .and_then(|f| Self::extract_string(&self.extract_engine, &f.extractor, html, context));
+            .and_then(|f| Self::extract_string(&f.extractor, html, runtime_context, flow_context));
 
         let word_count = fields
             .word_count
             .as_ref()
-            .and_then(|f| Self::extract_string(&self.extract_engine, &f.extractor, html, context));
+            .and_then(|f| Self::extract_string(&f.extractor, html, runtime_context, flow_context));
 
         // 提取章节列表
         let chapters = if let Some(chapter_rule) = &fields.chapters {
-            self.extract_chapters(chapter_rule, html, context)?
+            Self::extract_chapters(chapter_rule, html, runtime_context, flow_context)?
         } else {
             vec![]
         };
@@ -183,14 +151,18 @@ impl DetailFlowExecutor {
 
     /// 提取章节列表
     fn extract_chapters(
-        &self,
-        rule: &crawler_schema::fields::ChapterListRule,
+        rule: &ChapterListRule,
         html: &SharedValue,
-        context: &Context,
+        runtime_context: &RuntimeContext,
+        flow_context: &FlowContext,
     ) -> Result<Vec<ChapterItem>> {
         // 先提取列表容器
-        let list_result =
-            ExtractEngine::extract_field(&rule.list.extractor, html.as_ref(), context)?;
+        let list_result = ExtractEngine::extract_field(
+            &rule.list.extractor,
+            html.as_ref(),
+            runtime_context,
+            flow_context,
+        )?;
 
         let items = match list_result.as_ref() {
             ExtractValueData::Array(arr) => arr,
@@ -200,10 +172,9 @@ impl DetailFlowExecutor {
         let mut chapters = Vec::new();
         for item in items.iter() {
             let title =
-                Self::extract_string(&self.extract_engine, &rule.title.extractor, item, context);
-
+                Self::extract_string(&rule.title.extractor, item, runtime_context, flow_context);
             let url =
-                Self::extract_string(&self.extract_engine, &rule.url.extractor, item, context);
+                Self::extract_string(&rule.url.extractor, item, runtime_context, flow_context);
 
             if let (Some(title), Some(url)) = (title, url) {
                 chapters.push(ChapterItem { title, url });
@@ -212,22 +183,22 @@ impl DetailFlowExecutor {
 
         Ok(chapters)
     }
-}
 
-#[async_trait]
-impl FlowExecutor for DetailFlowExecutor {
-    type Input = DetailRequest;
-    type Output = DetailResponse;
-
-    async fn execute(&self, input: Self::Input, context: &mut Context) -> Result<Self::Output> {
+    /// 执行详情流程
+    pub async fn execute(
+        input: DetailRequest,
+        flow: &DetailFlow,
+        runtime_context: &RuntimeContext,
+        flow_context: &mut FlowContext,
+    ) -> Result<DetailResponse> {
         // 1. 设置上下文变量
-        context.set("detail_url", serde_json::json!(&input.url));
+        flow_context.set("detail_url", serde_json::json!(&input.url));
 
-        // 2. 渲染 URL（使用 TemplateRenderer trait）
-        let url = self.flow.url.render(context)?;
+        // 2. 渲染 URL
+        let url = flow.url.render(flow_context)?;
 
         // 3. 发起 HTTP 请求
-        let response = self.http_client.get(&url).await?;
+        let response = runtime_context.http_client().get(&url).await?;
         let html_text = response
             .text()
             .await
@@ -237,9 +208,10 @@ impl FlowExecutor for DetailFlowExecutor {
         )));
 
         // 4. 根据媒体类型提取字段
-        match &self.flow.fields {
+        match &flow.fields {
             DetailFields::Book(fields) => {
-                let detail = self.extract_book_detail(fields, &html, context)?;
+                let detail =
+                    Self::extract_book_detail(fields, &html, runtime_context, flow_context)?;
                 Ok(DetailResponse::Book(Box::new(detail)))
             }
             DetailFields::Video(_) => {

@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::value::{ExtractValueData, SharedValue},
 };
@@ -19,7 +19,8 @@ impl JsonSelectorExecutor {
     pub fn execute(
         selector: &SelectorStep,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         // 获取 JSON 值
         let json: Value = match input {
@@ -30,7 +31,9 @@ impl JsonSelectorExecutor {
                 // 如果是数组，对每个元素应用选择器
                 let results: Vec<SharedValue> = arr
                     .iter()
-                    .filter_map(|item| Self::execute(selector, item, _context).ok())
+                    .filter_map(|item| {
+                        Self::execute(selector, item, _runtime_context, _flow_context).ok()
+                    })
                     .collect();
                 return Ok(Arc::new(ExtractValueData::Array(Arc::new(results))));
             }

@@ -7,7 +7,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     extractor::value::{ExtractValueData, SharedValue},
 };
 use crawler_schema::flow::ComponentRef;
@@ -29,7 +29,8 @@ impl ComponentExecutor {
     pub fn execute(
         component_ref: &ComponentRef,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         // TODO: 完整实现需要：
         // 1. 从上下文获取全局组件注册表

@@ -480,6 +480,7 @@ dependencies = [
  "boa_engine",
  "chrono",
  "crawler-schema",
+ "dashmap",
  "jsonpath-rust",
  "md5",
  "mlua",

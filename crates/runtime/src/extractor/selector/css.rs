@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     error::RuntimeError,
     extractor::value::{ExtractValueData, SharedValue},
 };
@@ -18,7 +18,8 @@ impl CssSelectorExecutor {
     pub fn execute(
         selector: &SelectorStep,
         input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         // 获取 HTML 字符串
         let html = match input {

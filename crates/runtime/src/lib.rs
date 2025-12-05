@@ -57,13 +57,4 @@ pub mod model;
 // 工具函数
 pub mod util;
 
-// 重新导出常用类型
-pub use challenge::{ChallengeCredentials, ChallengeManager, CredentialsCache};
-pub use context::Context;
-pub use crawler::CrawlerRuntime;
-pub use error::RuntimeError;
-pub use script::{RhaiScriptEngine, ScriptContext, ScriptEngine};
-pub use webview::{SharedWebViewProvider, WebViewProvider, WebViewRequest, WebViewResponse};
-
-/// 运行时结果类型
-pub type Result<T> = std::result::Result<T, RuntimeError>;
+pub use error::{Result, RuntimeError};

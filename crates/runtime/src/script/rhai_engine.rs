@@ -13,6 +13,7 @@ use std::{
 };
 
 /// Rhai 脚本引擎
+#[derive(Debug)]
 pub struct RhaiScriptEngine {
     /// Rhai 引擎实例
     engine: Arc<Mutex<Engine>>,

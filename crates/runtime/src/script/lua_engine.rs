@@ -18,6 +18,7 @@ use super::{context::ScriptContext, engine::ScriptEngine};
 use crate::Result;
 use std::time::Duration;
 
+#[derive(Debug)]
 pub struct LuaScriptEngine;
 
 impl LuaScriptEngine {

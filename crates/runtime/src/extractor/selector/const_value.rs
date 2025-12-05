@@ -2,7 +2,7 @@
 
 use crate::{
     Result,
-    context::Context,
+    context::{FlowContext, RuntimeContext},
     extractor::value::{ExtractValueData, SharedValue},
 };
 use serde_json::Value;
@@ -16,7 +16,8 @@ impl ConstExecutor {
     pub fn execute(
         value: &Value,
         _input: &ExtractValueData,
-        _context: &Context,
+        _runtime_context: &RuntimeContext,
+        _flow_context: &FlowContext,
     ) -> Result<SharedValue> {
         Ok(Arc::new(ExtractValueData::from_json(value)))
     }

@@ -7,17 +7,54 @@ use serde::{Deserialize, Serialize};
 use super::common::{FilterGroup, Pagination};
 
 /// 发现页流程 (DiscoveryFlow)
-/// 用于列表页、分类页、发现页等场景
+///
+/// 用于列表页、分类页、发现页等场景，支持筛选和分页。
+///
+/// # 可用变量
+///
+/// ## Flow 变量（自动注入）
+///
+/// | 变量 | 类型 | 说明 |
+/// |------|------|------|
+/// | `page` | u32 | 当前页码 |
+/// | `{filter_key}` | String | 各筛选器的 key 对应的选中值 |
+///
+/// 筛选器变量名由 `filters[].key` 定义，例如：
+/// - 定义 `key = "category"` → 可用 `{{ category }}`
+/// - 定义 `key = "year"` → 可用 `{{ year }}`
+///
+/// ## Runtime 全局变量（通过 `$` 前缀访问）
+///
+/// | 变量 | 说明 |
+/// |------|------|
+/// | `$.base_url` | 目标网站基础 URL |
+/// | `$.domain` | 目标网站域名 |
 ///
 /// # 示例
 ///
 /// ```toml
 /// [discovery]
-/// url = "https://example.com/category/{{ category }}?page={{ page }}"
+/// url = "{{ $.base_url }}/list?category={{ category }}&year={{ year }}&page={{ page }}"
 ///
 /// [discovery.pagination]
 /// type = "page_number"
 /// start = 1
+///
+/// [[discovery.filters]]
+/// name = "分类"
+/// key = "category"
+/// options = [
+///     { name = "全部", value = "" },
+///     { name = "电影", value = "movie" },
+/// ]
+///
+/// [[discovery.filters]]
+/// name = "年份"
+/// key = "year"
+/// options = [
+///     { name = "全部", value = "" },
+///     { name = "2024", value = "2024" },
+/// ]
 ///
 /// [discovery.fields.title]
 /// steps = [{ css = ".title" }, { filter = "trim" }]
@@ -33,7 +70,8 @@ pub struct DiscoveryFlow {
     pub description: Option<String>,
 
     /// 数据源 URL 模板
-    /// 支持变量: {{ category }}, {{ page }}, 自定义筛选器变量
+    ///
+    /// 可用变量：`page`（页码）、筛选器 `key` 值、`$.base_url`（全局基础URL）
     pub url: Template,
 
     /// 流程级 HTTP 配置（可选）

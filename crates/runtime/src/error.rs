@@ -8,17 +8,9 @@ use thiserror::Error;
 #[derive(Debug, Error, Clone)]
 pub enum RuntimeError {
     // --- 模板相关错误 ---
-    /// 模板语法错误
-    #[error("模板语法错误: {message}")]
-    TemplateSyntax { message: String },
-
-    /// 模板渲染错误
-    #[error("模板渲染错误: {message}")]
-    TemplateRender { message: String },
-
-    /// 模板变量未定义
-    #[error("模板变量 '{variable}' 未定义")]
-    UndefinedVariable { variable: String },
+    /// 模板错误
+    #[error("模板错误: {error}")]
+    TemplateError { error: String },
 
     // --- 验证相关错误 ---
     /// 组件未定义
@@ -120,4 +112,22 @@ pub enum RuntimeError {
     /// 验证尝试次数超限
     #[error("验证尝试次数超过限制 ({attempts} 次)")]
     ChallengeMaxAttempts { attempts: u32 },
+
+    // --- 分页相关错误 ---
+    /// 分页操作错误
+    #[error("分页错误: {0}")]
+    Pagination(String),
+
+    // --- 变量相关错误 ---
+    /// 变量未找到
+    #[error("变量 '{0}' 未找到")]
+    VariableNotFound(String),
+
+    // --- 模板渲染错误 ---
+    /// 模板渲染错误
+    #[error("模板渲染错误: {message}")]
+    TemplateRender { message: String },
 }
+
+/// 运行时结果类型
+pub type Result<T> = std::result::Result<T, RuntimeError>;

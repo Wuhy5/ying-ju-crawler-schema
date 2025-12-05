@@ -2,7 +2,7 @@
 //!
 //! 提供便捷的请求构建接口
 
-use crate::{Result, context::Context, http::HttpClient, template::TemplateRenderer};
+use crate::{Result, context::FlowContext, http::HttpClient, template::TemplateExt};
 use crawler_schema::{
     config::{HttpMethod, RequestConfig},
     template::Template,
@@ -62,7 +62,7 @@ impl<'a> RequestBuilder<'a> {
     }
 
     /// 执行请求
-    pub async fn execute(self, context: &Context) -> Result<reqwest::Response> {
+    pub async fn execute(self, context: &FlowContext) -> Result<reqwest::Response> {
         // 渲染 URL
         let url = self.url.render(context)?;
 
