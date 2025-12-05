@@ -45,9 +45,8 @@ impl StepExecutorFactory {
             ExtractStep::Var(var) => Box::new(crate::extractor::selector::var::VarExecutor::new(
                 var.clone(),
             )),
-            ExtractStep::Script(_script) => {
-                // TODO: 实现脚本执行器
-                Box::new(crate::extractor::selector::noop::NoopExecutor)
+            ExtractStep::Script(script) => {
+                Box::new(crate::script::ScriptExecutor::new(script.clone()))
             }
             ExtractStep::UseComponent(component_ref) => Box::new(
                 crate::extractor::selector::component::ComponentExecutor::new(

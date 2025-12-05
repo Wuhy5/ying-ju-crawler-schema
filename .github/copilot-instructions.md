@@ -6,6 +6,10 @@ Ying-Ju 媒体爬虫规范和实现库为Ying-Ju-App(tauri实现)提供支持，
 - **`crawler-schema`**：纯数据结构定义（JSON Schema 生成、序列化）
 - **`crawler-runtime`**：运行时逻辑（模板渲染、配置合并、验证）
 
+## AI 要求
+- 强制使用中文回答英文思考
+- 必须遵守本开发指南中的所有约定
+
 ## 架构设计
 
 ### Schema / Runtime 分离模式（关键）
@@ -92,7 +96,6 @@ impl TemplateExt for Template { /* ... */ }
 - 约定变量：`{{ detail_url }}`、`{{ keyword }}`、`{{ page }}`
 
 ### 错误处理
-- Schema 阶段：`SchemaError`（解析错误）
 - Runtime 阶段：`RuntimeError`（渲染、验证、执行错误）
 - 使用 `thiserror` 定义，中文错误消息
 
@@ -127,11 +130,13 @@ cargo clippy                     # 代码质量检查
 cargo run --bin generate_schema  # 生成 JSON Schema
 ```
 
+**不允许使用 2>>&1 输出日志, 如果日志太多可以创建一个.logs的目录下存放日志文件**
+
 ## 开发流程
 
 完成代码任务后，按以下顺序执行：
-1. `cargo +nightly fmt` - 格式化代码
-2. `cargo clippy --fix --allow-dirty` - 自动修复可修复的问题
+1. `cargo clippy --fix --allow-dirty` - 自动修复可修复的问题
+2. `cargo +nightly fmt` - 格式化代码
 3. `cargo clippy` - 检查剩余的代码质量问题（可忽略 `dead_code`、`unused_variables` 等警告）
 4. `cargo test` - 运行测试（如有）
 

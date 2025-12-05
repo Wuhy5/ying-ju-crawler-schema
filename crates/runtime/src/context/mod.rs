@@ -43,6 +43,11 @@ impl Context {
         self.variables.all()
     }
 
+    /// 获取变量存储的引用
+    pub fn variables(&self) -> &HashMap<String, Value> {
+        self.variables.all()
+    }
+
     /// 获取变量存储的可变引用
     pub fn variables_mut(&mut self) -> &mut VariableStore {
         &mut self.variables

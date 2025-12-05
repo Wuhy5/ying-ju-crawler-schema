@@ -1,0 +1,173 @@
+# 17小说爬虫规则
+# 基于 legado 规则转换，演示脚本引擎使用
+
+# ============================================
+# 元数据配置
+# ============================================
+[meta]
+name = "17小说"
+author = "Ying-Ju"
+version = "1.0.0"
+spec_version = "1.0.0"
+domain = "www.1qxs.com"
+media_type = "book"
+description = "17小说网站爬虫规则"
+# 指定默认脚本引擎为 Rhai（轻量级，Rust 原生）
+script_engine = "rhai"
+
+# ============================================
+# 全局 HTTP 配置
+# ============================================
+[http]
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+timeout = 30
+
+# ============================================
+# 搜索流程
+# ============================================
+[search]
+description = "搜索小说"
+url = "https://www.1qxs.com/search.html?kw={{ keyword }}"
+
+[search.pagination]
+type = "none"
+
+# 列表提取规则
+[search.list]
+steps = [{ css = { expr = ".result_list ul li", all = true } }]
+
+# 列表项字段
+[search.fields.title]
+steps = [{ css = ".name a" }, { attr = "text" }, { filter = "trim" }]
+
+[search.fields.url]
+steps = [{ css = ".image a" }, { attr = "href" }]
+
+[search.fields.cover]
+steps = [{ css = ".image img" }, { attr = "src" }]
+nullable = true
+
+[search.fields.author]
+steps = [{ css = ".author" }, { attr = "text" }, { filter = "trim" }]
+nullable = true
+
+[search.fields.summary]
+steps = [{ css = ".book .desc" }, { attr = "text" }, { filter = "trim" }]
+nullable = true
+
+[search.fields.category]
+steps = [{ css = ".msg .type" }, { attr = "text" }, { filter = "trim" }]
+nullable = true
+
+# ============================================
+# 详情页流程
+# ============================================
+[detail]
+description = "获取书籍详情"
+url = "{{ detail_url }}"
+
+[detail.fields]
+media_type = "book"
+
+[detail.fields.title]
+steps = [{ css = ".name h1" }, { attr = "text" }, { filter = "trim" }]
+
+[detail.fields.author]
+steps = [{ css = ".name span" }, { attr = "text" }, { filter = "trim" }]
+
+[detail.fields.cover]
+steps = [{ css = ".book .image img" }, { attr = "data-original" }]
+nullable = true
+
+[detail.fields.intro]
+steps = [{ css = ".description" }, { attr = "text" }, { filter = "trim" }]
+nullable = true
+
+[detail.fields.category]
+steps = [{ css = ".label" }, { index = 1 }, { css = "span" }, { index = 0 }, { attr = "text" }]
+nullable = true
+
+[detail.fields.word_count]
+steps = [{ css = ".label" }, { index = 0 }, { css = "span" }, { index = 1 }, { attr = "text" }]
+nullable = true
+
+# 使用脚本处理最新章节名：去除多余前缀
+[detail.fields.last_chapter]
+steps = [
+    { css = ".detail .label" },
+    { index = 2 },
+    { attr = "text" },
+    { filter = "trim" },
+    # 使用脚本去除 "最新章节 " 前缀
+    { script = 'input.replace("最新章节 ", "")' }
+]
+nullable = true
+
+# 章节列表
+[detail.fields.chapters]
+list.steps = [{ css = { expr = ".list ul li a", all = true } }]
+# 使用脚本处理章节标题：中文数字转阿拉伯数字
+title.steps = [
+    { attr = "text" },
+    { filter = "trim" },
+    { script = "to_num_chapter(input)" }
+]
+url.steps = [{ attr = "href" }]
+
+# ============================================
+# 内容页流程
+# ============================================
+[content]
+description = "获取章节内容"
+url = "{{ content_url }}"
+
+[content.fields]
+media_type = "book"
+
+# 使用脚本处理章节标题
+[content.fields.title]
+steps = [
+    { css = "h1" },
+    { attr = "text" },
+    { filter = "trim" },
+    { script = "to_num_chapter(input)" }
+]
+nullable = true
+
+# 使用脚本清理正文内容
+[content.fields.content]
+steps = [
+    { css = ".content" },
+    { attr = "html" },
+    # 使用完整脚本配置，指定引擎
+    { script = { code = '''
+        // 清理广告和多余空白
+        let text = input;
+        text = regex_replace(text, "小说免费阅读.*", "");
+        text = regex_replace(text, "本章未完.*", "");
+        text = regex_replace(text, "<br\\s*/?>", "\n");
+        text
+    ''', engine = "rhai" } }
+]
+
+[content.fields.next_url]
+steps = [{ css = "a:contains('下一页')" }, { attr = "href" }]
+nullable = true
+
+# ============================================
+# 可复用组件定义
+# ============================================
+[components]
+
+# 定义一个清理章节标题的组件
+[components.clean_chapter_title]
+extractor.steps = [
+    { filter = "trim" },
+    { script = "to_num_chapter(input)" }
+]
+
+# 定义一个繁简转换组件
+[components.t2s_convert]
+extractor.steps = [
+    { script = "t2s(input)" }
+]

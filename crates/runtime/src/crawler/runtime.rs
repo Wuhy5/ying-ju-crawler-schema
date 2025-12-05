@@ -81,7 +81,11 @@ impl CrawlerRuntime {
 
     /// 搜索
     pub async fn search(&self, keyword: &str, page: u32) -> Result<SearchResponse> {
-        let executor = SearchFlowExecutor::new(self.rule.search.clone());
+        let executor = SearchFlowExecutor::new(self.rule.search.clone())
+            .with_http_client(self.http_client.clone())
+            .with_extract_engine(self.extract_engine.clone())
+            .with_base_url(self.rule.meta.domain.clone());
+
         let request = SearchRequest {
             keyword: keyword.to_string(),
             page,
@@ -93,7 +97,11 @@ impl CrawlerRuntime {
 
     /// 获取详情
     pub async fn detail(&self, url: &str) -> Result<DetailResponse> {
-        let executor = DetailFlowExecutor::new(self.rule.detail.clone());
+        let executor = DetailFlowExecutor::new(self.rule.detail.clone())
+            .with_http_client(self.http_client.clone())
+            .with_extract_engine(self.extract_engine.clone())
+            .with_base_url(self.rule.meta.domain.clone());
+
         let request = DetailRequest {
             url: url.to_string(),
         };

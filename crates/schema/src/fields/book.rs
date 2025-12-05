@@ -41,8 +41,8 @@ pub struct BookDetailFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: OptionalFieldRule,
 
-    /// 最新章节名
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// 最新章节名（别名：latest_chapter）
+    #[serde(alias = "latest_chapter", skip_serializing_if = "Option::is_none")]
     pub last_chapter: OptionalFieldRule,
 
     /// 更新时间
@@ -57,8 +57,8 @@ pub struct BookDetailFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub toc_url: OptionalFieldRule,
 
-    /// 章节列表提取规则
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// 章节列表提取规则（别名：chapter_list）
+    #[serde(alias = "chapter_list", skip_serializing_if = "Option::is_none")]
     pub chapters: Option<ChapterListRule>,
 }
 
@@ -74,7 +74,11 @@ pub struct BookContentFields {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: OptionalFieldRule,
 
+    /// 上一页 URL（用于分页章节）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prev_url: OptionalFieldRule,
+
     /// 下一页 URL（用于分页章节）
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_page_url: OptionalFieldRule,
+    pub next_url: OptionalFieldRule,
 }

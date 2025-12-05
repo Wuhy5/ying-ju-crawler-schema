@@ -3,6 +3,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::script::ScriptEngine;
+
 // ============================================================================
 // 媒体类型
 // ============================================================================
@@ -64,4 +66,7 @@ pub struct Meta {
     /// 数据源的图标URL，用于UI展示。
     #[serde(skip_serializing_if = "Option::is_none")]
     pub icon_url: Option<String>,
+    /// 默认脚本引擎（可选，默认 JavaScript）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub script_engine: Option<ScriptEngine>,
 }
